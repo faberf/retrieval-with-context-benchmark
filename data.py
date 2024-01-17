@@ -16,8 +16,48 @@ timestamps = None
 
 queries= [
     Query(
-        "A woman sorting through mail.",
-        []
+        "A woman sorting mail into ashelf.",
+        [68]
+    ),
+    Query(
+        "Beat von Fischer",
+        [15]
+    ),
+    Query(
+        "Parcel sorting line",
+        [66]
+    ),
+    Query(
+        "A caveman holding a keyboard in front of a TV.",
+        [117]
+    ),
+    Query(
+        "Sprechhörer schreit von Turm herab",
+        [127]
+    ),
+    Query(
+        "Alexander Graham Bell",
+        [143]
+    ),
+    Query(
+        "Mail being loaded onto an airplane for shipping.",
+        [75]
+    ),
+    Query(
+        "Mann macht Rauchzeichen",
+        [82]
+    ),
+    Query(
+        "Samuel Morse",
+        [87]
+    ),
+    Query(
+        "Frau tippt Telegram in Computer",
+        [101]
+    ),
+    Query(
+        "Device used for closing a bag of air mail.",
+        [70]
     )
 ]
 
