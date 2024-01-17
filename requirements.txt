@@ -1,0 +1,6 @@
+ujson
+transformers
+numpy
+torch
+numpy
+pillow
