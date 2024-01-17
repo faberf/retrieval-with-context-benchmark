@@ -16,7 +16,7 @@ timestamps = None
 
 queries= [
     Query(
-        "A woman sorting mail into ashelf.",
+        "A woman sorting mail into a shelf.",
         [68]
     ),
     Query(
