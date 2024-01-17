@@ -23,7 +23,7 @@ queries= [
 
 def load(path):
     global captions, asr_transcripts, image_embeddings, timestamps
-    with open(path, 'r') as f:
+    with open(path, 'rb') as f:
         data = json.load(f)
     captions = data["captions"]
     asr_transcripts = data["asr_transcripts"]

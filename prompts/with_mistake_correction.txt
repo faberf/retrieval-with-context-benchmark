@@ -1,0 +1,14 @@
+We have a segmented video where each segment has automatically extracted asr transcripts and image captions. These features are noisy. Please generate a description of segment {segment_number}: 
+{segment_features}
+The description should describe what is happening in the segment using the following context information: 
+
+Previous Segments: 
+{previous_segments}
+Subsequent Segments: 
+{next_segments}
+Video Description:
+{video_description}
+
+Provide a very short sentence describing what is going on in the segment. Write it as if you were confident, do not make it sound speculative. Do not mention any features directly. Do not mention the segment number. Keep it simple and just focus on what is happening in the segment, like a scene description. Do not include any information that is not present in the segment.
+
+Keep in mind that the image captions and asr transcriptions contain many errors, if there is a feature that does not fit in with the rest of the context it is probably a mistake. Some mistakes are just slight inaccuracies others are hallucinations.
