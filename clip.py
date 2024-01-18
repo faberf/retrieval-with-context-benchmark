@@ -11,6 +11,8 @@ class ClipVitLargePatch14():
 
 
     def text_embedding(self, text, config={}):
+        if len(text) > 77:
+            text = text[:77]
         inputs = self.tokenizer(text, padding=True, return_tensors="pt")
 
         outputs = self.model.get_text_features(**inputs, **config)

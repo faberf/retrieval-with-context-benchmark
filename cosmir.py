@@ -1,11 +1,10 @@
 import ujson as json
-from clip import ClipVitLargePatch14
+from multilingual_e5_large import MultilingualE5Large
 from data import load
 from functools import lru_cache
 import os
 
-model = ClipVitLargePatch14()
-model.load_model()
+model = MultilingualE5Large()
 load("data.json")
 
 from data import image_embeddings, captions, asr_transcripts, timestamps
@@ -73,6 +72,8 @@ def extract_embeddings(base_path, window_size, template_name):
     with open(descriptions_file, 'r') as f:
         descriptions = json.load(f)
     
+    
+    model.load_model()  
     embeddings = model.text_embedding(descriptions)
     
     embeddings_file = f"{base_path}-ws_{window_size}-t_{template_name}-embeddings.json"
