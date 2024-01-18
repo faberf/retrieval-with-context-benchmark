@@ -3,8 +3,8 @@ from clip import ClipVitLargePatch14
 from data import load
 import numpy as np
 import torch
-from torchmetrics.retrieval import RetrievalMRR
 from torchmetrics.functional.retrieval import retrieval_reciprocal_rank
+from torchmetrics.classification import Precision, Recall
 
 model = ClipVitLargePatch14()
 model.load_model()
@@ -59,6 +59,25 @@ def mean_reciprocal_rank(scores, ground_truth):
     return mrr
 
 
+def precision_recall_per_query(scores, ground_truth, threshold=0.25):
+    for i in range(len(queries)):
+        # Convert to binary predictions based on the threshold
+        predicted = (torch.from_numpy(scores[i]) > threshold).float()
+
+        # Convert ground truth to binary tensor
+        target = torch.tensor(ground_truth[i], dtype=torch.float32)
+
+        # Initialize Precision and Recall metrics
+        precision_metric = Precision(task="binary")
+        recall_metric = Recall(task="binary")
+
+        # Compute Precision and Recall
+        precision = precision_metric(predicted, target)
+        recall = recall_metric(predicted, target)
+
+        print(f"Query {i}: precision: {precision.item()}, recall: {recall.item()}")
+
+
 if __name__ == "__main__":
     ground_truth = np.zeros([len(queries),len(image_embeddings)])
     for i in range(len(queries)):
@@ -71,10 +90,14 @@ if __name__ == "__main__":
     mrr = mean_reciprocal_rank(scores_image, ground_truth)
     print(f"Mean Reciprocal Rank for image embeddings: {mrr}")
 
+    precision_recall_per_query(scores_image, ground_truth)
+
     # ASR transcript embedding
-    #scores_asr = score_segments(asr_transcripts, False)
+    # scores_asr = score_segments(asr_transcripts, False)
 
     # Image captions
     scores_caption = score_segments(captions, False)
     mrr = mean_reciprocal_rank(scores_caption, ground_truth)
     print(f"Mean Reciprocal Rank for image captions: {mrr}")
+
+    precision_recall_per_query(scores_caption, ground_truth)
