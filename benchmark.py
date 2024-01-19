@@ -94,23 +94,23 @@ if __name__ == "__main__":
     # CLIP image embeddings
     scores_image = score_segments(image_embeddings, query_embeddings_clip)
     save_ranks(scores_image, "image_ranks.json")
-    mrr_image = mean_reciprocal_rank(scores_image, ground_truth)
-    print(f"Mean Reciprocal Rank for image embeddings: {mrr_image}")
+    # mrr_image = mean_reciprocal_rank(scores_image, ground_truth)
+    # print(f"Mean Reciprocal Rank for image embeddings: {mrr_image}")
 
-    precision_recall_per_query(scores_image, ground_truth)
+    # precision_recall_per_query(scores_image, ground_truth)
 
     scores_asr = score_segments(asr_embeddings, query_embeddings)
     save_ranks(scores_asr, "asr_ranks.json")
-    mrr_asr = mean_reciprocal_rank(scores_asr, ground_truth)
-    print(f"Mean Reciprocal Rank for ASR embeddings: {mrr_asr}")
+    # mrr_asr = mean_reciprocal_rank(scores_asr, ground_truth)
+    # print(f"Mean Reciprocal Rank for ASR embeddings: {mrr_asr}")
 
     # Image captions
     scores_caption = score_segments(caption_embeddings, query_embeddings)
     save_ranks(scores_caption, "caption_ranks.json")
-    mrr = mean_reciprocal_rank(scores_caption, ground_truth)
-    print(f"Mean Reciprocal Rank for image captions: {mrr}")
+    # mrr = mean_reciprocal_rank(scores_caption, ground_truth)
+    # print(f"Mean Reciprocal Rank for image captions: {mrr}")
 
-    precision_recall_per_query(scores_caption, ground_truth)
+    # precision_recall_per_query(scores_caption, ground_truth)
     
     # COSMIR
     
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         cosmir_embeddings = json.load(f)
     scores_cosmir = score_segments(cosmir_embeddings, query_embeddings)
     save_ranks(scores_cosmir, "cosmir_ranks.json")
-    mrr = mean_reciprocal_rank(scores_cosmir, ground_truth)
-    print(f"Mean Reciprocal Rank for COSMIR embeddings: {mrr}")
+    # mrr = mean_reciprocal_rank(scores_cosmir, ground_truth)
+    # print(f"Mean Reciprocal Rank for COSMIR embeddings: {mrr}")
     
-    precision_recall_per_query(scores_cosmir, ground_truth)
+    # precision_recall_per_query(scores_cosmir, ground_truth)
