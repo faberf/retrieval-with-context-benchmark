@@ -25,13 +25,58 @@
         {
           "name": "video",
           "factory": "VideoSourceMetadata"
+        },
+        {
+          "name": "clip",
+          "factory": "DenseEmbedding",
+          "parameters": {
+            "host": "http://localhost:8888/",
+            "model": "clip-vit-large-patch14",
+            "length": "768",
+            "pollingIntervalMs": "1500"
+          }
+        },
+        {
+          "name": "document_type",
+          "factory": "ImageClassification",
+          "parameters": {
+            "host": "http://localhost:8888/",
+            "model": "clip-vit-large-patch14",
+            "classes": "text document,photograph,artwork",
+            "threshold": "0.5",
+            "top_k": "2"
+          }
+        },
+          {
+            "name": "caption",
+            "factory": "ImageCaption",
+            "parameters": {
+              "host": "http://localhost:8888/",
+              "prompt": "Question: Describe this image using a single adjective. Answer:"
+            }
+          },
+        {
+            "name": "asr",
+            "factory": "ASR",
+              "parameters": {
+                "host": "http://localhost:8888/",
+                "model": "whisper"
+              }
+        },
+        {
+          "name": "ocr",
+          "factory": "OCR",
+          "parameters": {
+            "host": "http://localhost:8888/",
+            "model": "tesseract"
+          }
         }
       ],
       "resolvers": {
         "disk": {
           "factory": "DiskResolver",
           "parameters": {
-            "location": "./thumbnails/vitrivr"
+            "location": "./thumbnails"
           }
         }
       },

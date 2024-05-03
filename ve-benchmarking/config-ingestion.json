@@ -5,7 +5,7 @@
     "resolverName": "disk",
     "local": {
       "enumerator": {
-        "path": "/home/rettig0000/Documents/datasets/PTT-Testdaten/PTT-Dok",
+        "path": "../../vitrivr/objects",
         "depth": "1"
       },
       "thumbs": {
@@ -15,6 +15,9 @@
       "filter": {
         "type": "SOURCE:VIDEO"
       }
+    },
+    "global": {
+      "batchSize": "5"
     }
   },
   "operators": {
@@ -49,9 +52,21 @@
       "type": "EXTRACTOR",
       "fieldName": "video"
     },
-    "thumbs": {
-      "type": "EXPORTER",
-      "exporterName": "thumbnail"
+    "clip": {
+      "type": "EXTRACTOR",
+      "fieldName": "clip"
+    },
+    "caption": {
+      "type": "EXTRACTOR",
+      "fieldName": "caption"
+    },
+    "ocr": {
+      "type": "EXTRACTOR",
+      "fieldName": "ocr"
+    },
+    "document_type": {
+      "type": "EXTRACTOR",
+      "fieldName": "document_type"
     },
     "filter": {
       "type": "TRANSFORMER",
@@ -80,14 +95,32 @@
         "selector"
       ]
     },
-    "thumbnails": {
-      "operator": "thumbs",
+    "time_metadata": {
+      "operator": "time_metadata",
       "inputs": [
         "selector"
       ]
     },
-    "time_metadata": {
-      "operator": "time_metadata",
+    "clip": {
+      "operator": "clip",
+      "inputs": [
+        "selector"
+      ]
+    },
+    "caption": {
+      "operator": "caption",
+      "inputs": [
+        "selector"
+      ]
+    },
+    "ocr": {
+      "operator": "ocr",
+      "inputs": [
+        "selector"
+      ]
+    },
+    "document_type": {
+      "operator": "document_type",
       "inputs": [
         "selector"
       ]
@@ -96,8 +129,8 @@
       "operator": "filter",
       "inputs": [
         "averagecolor",
-        "thumbnails",
-        "time_metadata"
+        "time_metadata",
+        "clip"
       ],
       "merge": "COMBINE"
     },
