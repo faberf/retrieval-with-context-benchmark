@@ -1,27 +1,37 @@
-"Two ice skaters in front of mountains",[00104],single
-"Group of people in La Combe",[00106],multimodal
-"Ship at port in Scherzligen",[00111],multimodal
-"Men working on bow of a ship",[00112,00114],single
-"Hall with chandeliers",[00121],single
-"Group of people at the entrance to the Eismeer",[00122],multimodal
-"Mountain town by the side of a lake",[00123],single
-"post worker uniforms",[00125,00126,00132,00134],single
-"post office interior",[00127,00128,00129,00130,00131,00133],context
-"post worker at typewriter",[00135,00136],context
-"women on telephone in post office",[00138,00139],context
-"bag of mail",[00142],context
-"horse-drawn carriage in front of a hotel",[00144],multimodal
-"campground in Andermatt",[00147],multimodal
-"horses crossing the Rhone",[00149],multimodal
-"Rhone glacier",[00150],single
-"portrait of a post worker with hat and beard",[00154],multimodal
-"school of telegraphists",[00157,00158,00160,00161],multimodal
-"school of telegraphists",[00159,00162,00163],context
-"photo of Lauterbrunnen",[00164],multimodal
-"boats on lake Geneva",[00171],multimodal
-"boats on the Rhine in Schaffhausen",[00172],multimodal
-"Matterhorn",[00175],single
-"Mont Blanc",[00176],multimodal
-"Simplon waterfalls",[00177],multimodal
-"Borromee islands",[00178],multimodal
-"Streets of Bern with a clocktower",[00191,00192],context
+"Two ice skaters in front of mountains",[FFF 00104.jpg],single
+"Group of people in La Combe",[FFF 00106.jpg],multimodal
+"Ship at port in Scherzligen",[FFF 00111.jpg],multimodal
+"Men working on bow of a ship",[FFF 00112.jpg,00114],single
+"Hall with chandeliers",[FFF 00121.jpg],single
+"Group of people at the entrance to the Eismeer",[FFF 00122.jpg],multimodal
+"Mountain town by the side of a lake",[FFF 00123.jpg],single
+"post worker uniforms",[FFF 00125.jpg,FFF 00126.jpg,FFF 00132.jpg,FFF 00134.jpg],single
+"post office interior",[FFF 00127.jpg,FFF 00128.jpg,FFF 00129.jpg,FFF 00130.jpg,FFF 00131.jpg,FFF 00133.jpg],context
+"post worker at typewriter",[FFF 00135.jpg,FFF 00136.jpg],context
+"women on telephone in post office",[FFF 00138.jpg,FFF 00139.jpg],context
+"bag of mail",[FFF 00142.jpg],context
+"horse-drawn carriage in front of a hotel",[FFF 00144.jpg],multimodal
+"campground in Andermatt",[FFF 00147.jpg],multimodal
+"horses crossing the Rhone",[FFF 00149.jpg],multimodal
+"Rhone glacier",[FFF 00150.jpg],single
+"portrait of a post worker with hat and beard",[FFF 00154.jpg],multimodal
+"school of telegraphists",[FFF 00157.jpg,FFF 00158.jpg,FFF 00160.jpg,FFF 00161.jpg],multimodal
+"school of telegraphists",[FFF 00159.jpg,FFF 00162.jpg,FFF 00163.jpg],context
+"photo of Lauterbrunnen",[FFF 00164.jpg],multimodal
+"boats on lake Geneva",[FFF 00171.jpg],multimodal
+"boats on the Rhine in Schaffhausen",[FFF 00172.jpg],multimodal
+"Matterhorn",[FFF 00175.jpg],single
+"Mont Blanc",[FFF 00176.jpg],multimodal
+"Simplon waterfalls",[FFF 00177.jpg],multimodal
+"Borromee islands",[FFF 00178.jpg],multimodal
+"Streets of Bern with a clocktower",[FFF 00191.jpg,FFF 00192.jpg],context
+"Sommerfahrtordnung",[PP_00043.jpg,PP_00044.jpg,PP_00045.jpg,PP_00097.jpg,PP_00099.jpg],multimodal
+"Odessa",[PP_00097.jpg],multimodal
+"Telephone network",[PP_00371.jpg],multilingual
+"Map of Swiss zip codes",[PP_01291.jpg,PP_01295.jpg],multilingual
+"Map of zip codes of Western Switzerland",[PP_01295.jpg],multilingual
+"Karte des Kantons Wallis",[PP_01641.jpg],single
+"Réseau de poste internationale",[PP_00097.jpg,PPQ_00103.jpg],multimodal multilingual
+"Post office Affoltern", [Post-199_A_0003_Affoltern_im_Emmental_015.tif,Post-199_A_0003_Affoltern_im_Emmental_014.tif,Post-199_A_0003_Affoltern_im_Emmental_011.tif],single context multilingual
+"Dokument, das die Poststelle Hinterfultigen beschreibt",[Post-199_A_0003_Hinterfultigen_007.tif],multilingual multimodal
+"Telefonbuch für Bern",[P-260-1_Bern_1910_0059.tif,P-260-1_Bern_1910_0058.tif,P-260-1_Bern_1910_0057.tif,P-260-1_Bern_1910_0056.tif,P-260-1_Bern_1910_0056.tif,P-260-1_Bern_1910_0055.tif,P-260-1_Bern_1910_0054.tif],multimodal
