@@ -35,3 +35,6 @@
 "Post office Affoltern", [Post-199_A_0003_Affoltern_im_Emmental_015.tif,Post-199_A_0003_Affoltern_im_Emmental_014.tif,Post-199_A_0003_Affoltern_im_Emmental_011.tif],single context multilingual
 "Dokument, das die Poststelle Hinterfultigen beschreibt",[Post-199_A_0003_Hinterfultigen_007.tif],multilingual multimodal
 "Telefonbuch für Bern",[P-260-1_Bern_1910_0059.tif,P-260-1_Bern_1910_0058.tif,P-260-1_Bern_1910_0057.tif,P-260-1_Bern_1910_0056.tif,P-260-1_Bern_1910_0056.tif,P-260-1_Bern_1910_0055.tif,P-260-1_Bern_1910_0054.tif],multimodal
+"counters inside the post office of Brienz",[Post-199_A_0003_Brienz_BE_052.png,Post-199_A_0003_Brienz_BE_054.png],context
+"map of Brienz",[Post-199_A_0003_Brienz_BE_067.png,Post-199_A_0003_Brienz_BE_068.png],single
+"newspaper article about the opening of the new post office building in Brienz",[Post-199_A_0003_Brienz_BE_019.png,Post-199_A_0003_Brienz_BE_028.png,Post-199_A_0003_Brienz_BE_054.png,Post-199_A_0003_Brienz_BE_055.png,Post-199_A_0003_Brienz_BE_058.png]
