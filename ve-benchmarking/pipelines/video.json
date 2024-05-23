@@ -12,7 +12,7 @@
         "depth": "5"
       },
       "filter": {
-        "type": "SOURCE:VIDEO"
+        "type": "SEGMENT"
       },
       "decoder": {
         "timeWindowMs": "2000"
@@ -58,8 +58,8 @@
   },
   "operations": {
     "enumerator-stage": {"operator": "enumerator"},
-    "filter-stage": {"operator": "filter","inputs": ["enumerator-stage"]},
-    "decoder-stage": {"operator": "decoder","inputs": ["filter-stage"]},
+    "decoder-stage": {"operator": "decoder","inputs": ["enumerator-stage"]},
+    "filter-stage": {"operator": "filter","inputs": ["decoder-stage"]},
     "selector-stage": {"operator": "selector","inputs": ["filter-stage"]},
     "asr-stage": {"operator": "asr", "inputs": ["selector-stage"]},
     "caption-stage": {"operator": "caption", "inputs": ["selector-stage"]},
