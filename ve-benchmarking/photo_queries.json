@@ -1,0 +1,425 @@
+[
+    {
+        "query": "Two ice skaters in front of mountains",
+        "files": ["FFF 00104.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "Group of people in La Combe",
+        "files": ["FFF 00106.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Ship at port in Scherzligen",
+        "files": ["FFF 00111.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Men working on bow of a ship",
+        "files": ["FFF 00112.jpg", "00114"],
+        "tag": ["single"]
+    },
+    {
+        "query": "Hall with chandeliers",
+        "files": ["FFF 00121.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "Group of people at the entrance to the Eismeer",
+        "files": ["FFF 00122.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Mountain town by the side of a lake",
+        "files": ["FFF 00123.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "post worker uniforms",
+        "files": ["FFF 00125.jpg", "FFF 00126.jpg", "FFF 00132.jpg", "FFF 00134.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "post office interior",
+        "files": ["FFF 00127.jpg", "FFF 00128.jpg", "FFF 00129.jpg", "FFF 00130.jpg", "FFF 00131.jpg", "FFF 00133.jpg"],
+        "tag": ["context"]
+    },
+    {
+        "query": "post worker at typewriter",
+        "files": ["FFF 00135.jpg", "FFF 00136.jpg"],
+        "tag": ["context"]
+    },
+    {
+        "query": "women on telephone in post office",
+        "files": ["FFF 00138.jpg", "FFF 00139.jpg"],
+        "tag": ["context"]
+    },
+    {
+        "query": "bag of mail",
+        "files": ["FFF 00142.jpg"],
+        "tag": ["context"]
+    },
+    {
+        "query": "horse-drawn carriage in front of a hotel",
+        "files": ["FFF 00144.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "campground in Andermatt",
+        "files": ["FFF 00147.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "horses crossing the Rhone",
+        "files": ["FFF 00149.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Rhone glacier",
+        "files": ["FFF 00150.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "portrait of a post worker with hat and beard",
+        "files": ["FFF 00154.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "school of telegraphists",
+        "files": ["FFF 00157.jpg", "FFF 00158.jpg", "FFF 00160.jpg", "FFF 00161.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "school of telegraphists",
+        "files": ["FFF 00159.jpg", "FFF 00162.jpg", "FFF 00163.jpg"],
+        "tag": ["context"]
+    },
+    {
+        "query": "photo of Lauterbrunnen",
+        "files": ["FFF 00164.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "boats on lake Geneva",
+        "files": ["FFF 00171.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "boats on the Rhine in Schaffhausen",
+        "files": ["FFF 00172.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Matterhorn",
+        "files": ["FFF 00175.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "Mont Blanc",
+        "files": ["FFF 00176.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Simplon waterfalls",
+        "files": ["FFF 00177.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Borromee islands",
+        "files": ["FFF 00178.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Streets of Bern with a clocktower",
+        "files": ["FFF 00191.jpg", "FFF 00192.jpg"],
+        "tag": ["context"]
+    },
+    {
+        "query": "Sommerfahrtordnung",
+        "files": ["PP_00043.jpg", "PP_00044.jpg", "PP_00045.jpg", "PP_00097.jpg", "PP_00099.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Odessa",
+        "files": ["PP_00097.jpg"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "Telephone network",
+        "files": ["PP_00371.jpg"],
+        "tag": ["multilingual"]
+    },
+    {
+        "query": "Map of Swiss zip codes",
+        "files": ["PP_01291.jpg", "PP_01295.jpg"],
+        "tag": ["multilingual"]
+    },
+    {
+        "query": "Map of zip codes of Western Switzerland",
+        "files": ["PP_01295.jpg"],
+        "tag": ["multilingual"]
+    },
+    {
+        "query": "Karte des Kantons Wallis",
+        "files": ["PP_01641.jpg"],
+        "tag": ["single"]
+    },
+    {
+        "query": "Réseau de poste internationale",
+        "files": ["PP_00097.jpg", "PPQ_00103.jpg"],
+        "tag": ["multimodal", "multilingual"]
+    },
+    {
+        "query": "Post office Affoltern",
+        "files": ["Post-199_A_0003_Affoltern_im_Emmental_015.tif", "Post-199_A_0003_Affoltern_im_Emmental_014.tif", "Post-199_A_0003_Affoltern_im_Emmental_011.tif"],
+        "tag": ["single", "context", "multilingual"]
+    },
+    {
+        "query": "Dokument, das die Poststelle Hinterfultigen beschreibt",
+        "files": ["Post-199_A_0003_Hinterfultigen_007.tif"],
+        "tag": ["multilingual", "multimodal"]
+    },
+    {
+        "query": "Telefonbuch für Bern",
+        "files": ["P-260-1_Bern_1910_0059.tif", "P-260-1_Bern_1910_0058.tif", "P-260-1_Bern_1910_0057.tif", "P-260-1_Bern_1910_0056.tif", "P-260-1_Bern_1910_0056.tif", "P-260-1_Bern_1910_0055.tif", "P-260-1_Bern_1910_0054.tif"],
+        "tag": ["multimodal"]
+    },
+    {
+        "query": "counters inside the post office of Brienz",
+        "files": ["Post-199_A_0003_Brienz_BE_052.png", "Post-199_A_0003_Brienz_BE_054.png"],
+        "tag": ["context"]
+    },
+    {
+        "query": "map of Brienz",
+        "files": ["Post-199_A_0003_Brienz_BE_067.png", "Post-199_A_0003_Brienz_BE_068.png"],
+        "tag": ["single"]
+    },
+    {
+        "query": "newspaper article about the opening of the new post office building in Brienz",
+        "files": ["Post-199_A_0003_Brienz_BE_019.png", "Post-199_A_0003_Brienz_BE_028.png", "Post-199_A_0003_Brienz_BE_054.png", "Post-199_A_0003_Brienz_BE_055.png", "Post-199_A_0003_Brienz_BE_058.png"],
+        "tag": ["single"]
+    },
+    {
+        "query": "A caveman holding a keyboard in front of a TV.",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                420.84,
+                429.02
+            ]
+        ],
+        "tag": ["visual"]
+    },
+    {
+        "query": "Sprechh\u00f6rer schreit von Turm herab",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                449.28,
+                452.54
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Alexander Graham Bell",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                479.52,
+                484.02
+            ]
+        ],
+        "tag": ["audio"]
+    },
+    {
+        "query": "Mail being loaded onto an airplane for shipping.",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                176.68,
+                190.58
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Mann macht Rauchzeichen",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                226.44,
+                241.1
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Samuel Morse",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                263.36,
+                269.82
+            ]
+        ],
+        "tag": ["audio"]
+    },
+    {
+        "query": "Frau tippt Telegram in Computer",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                324.28,
+                334.22
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Device used for closing a bag of air mail",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                171.52,
+                176.66
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Mail being transported in the 19th century",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                71.92,
+                78.66
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Man sorting mail on a train",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                94.52,
+                103.94
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Comedic acting",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                4.64,
+                36.46
+            ],
+            [
+                200.84,
+                211.06
+            ],
+            [
+                226.44,
+                241.1
+            ],
+            [
+                242.04,
+                248.78
+            ],
+            [
+                420.84,
+                429.02
+            ],
+            [
+                440.28,
+                479.5
+            ],
+            [
+                655.44,
+                671.7
+            ]
+        ],
+        "tag": ["context"]
+    },
+    {
+        "query": "Man presenting in front of a screen",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                389.16,
+                418.1
+            ]
+        ],
+        "tag": ["visual"]
+    },
+    {
+        "query": "Induction Coil",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                494.2,
+                506.54
+            ]
+        ],
+        "tag": ["audio"]
+    },
+    {
+        "query": "First telephone service in zurich",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                525.8,
+                533.86
+            ]
+        ],
+        "tag": ["audio"]
+    },
+    {
+        "query": "Junge Frau liegt auf dem Bett mit telefon in der hand",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                310.04,
+                315.38
+            ],
+            [
+                316.96,
+                320.58
+            ]
+        ],
+        "tag": ["visual"]
+    },
+    {
+        "query": "Historical portrait",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                36.48,
+                49.66
+            ],
+            [
+                263.36,
+                269.82
+            ],
+            [
+                479.52,
+                484.02
+            ]
+        ],
+        "tag": ["visual"]
+    },
+    {
+        "query": "Man walking in tunnel full of cables",
+        "files": ["FLM 0215_02.mp4"],
+        "segments": [
+            [
+                570.64,
+                577.18
+            ]
+        ],
+        "tag": ["visual"]
+    }
+]
