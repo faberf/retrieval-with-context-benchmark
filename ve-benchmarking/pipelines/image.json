@@ -1,7 +1,7 @@
 {
   "schema": "ptt",
   "context": {
-    "contentFactory": "InMemoryContentFactory",
+    "contentFactory": "CachedContentFactory",
     "resolverName": "disk",
     "local": {
       "content": {
@@ -54,19 +54,14 @@
   "operations": {
     "enumerator-stage": {"operator": "enumerator"},
     "decoder-stage": {"operator": "decoder", "inputs": ["enumerator-stage"]},
-    "filter-stage": {"operator": "filter", "inputs": ["decoder-stage"]},
-    "clip-stage": {"operator": "clip", "inputs": ["filter-stage"]},
-    "ocr-stage": {"operator": "ocr", "inputs": ["filter-stage"]},
-    "caption-stage": {"operator": "caption", "inputs": ["filter-stage"]},
-    "document-type-stage": {"operator": "document_type", "inputs": ["filter-stage"]},
-    "file-metadata-stage": {"operator": "file_metadata", "inputs": ["filter-stage"]}
+    "clip-stage": {"operator": "clip", "inputs": ["decoder-stage"]},
+    "ocr-stage": {"operator": "ocr", "inputs": ["decoder-stage"]},
+    "caption-stage": {"operator": "caption", "inputs": ["decoder-stage"]},
+    "document-type-stage": {"operator": "document_type", "inputs": ["decoder-stage"]},
+    "file-metadata-stage": {"operator": "file_metadata", "inputs": ["decoder-stage"]},
+    "filter-stage": {"operator": "filter", "inputs": ["clip-stage", "ocr-stage", "caption-stage", "document-type-stage", "file-metadata-stage"], "merge": "COMBINE"}
   },
   "output": [
-    "caption-stage",
-    "ocr-stage",
-    "clip-stage",
-    "document-type-stage",
-    "file-metadata-stage"
-  ],
-  "mergeType": "COMBINE"
+    "filter-stage"
+  ]
 }

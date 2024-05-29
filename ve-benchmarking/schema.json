@@ -31,7 +31,9 @@
           "factory": "ASR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
-            "model": "whisper"
+            "model": "whisper",
+            "timeoutSeconds": "100",
+            "retries":"1000"
           }
         },
         {
@@ -40,7 +42,9 @@
           "parameters": {
             "host": "http://10.34.58.85:8888/",
             "model": "open-clip-vit-b32",
-            "length": "512"
+            "length": "512",
+            "timeoutSeconds": "100",
+            "retries":"1000"
           }
         },
         {
@@ -49,6 +53,8 @@
           "parameters": {
             "host": "http://10.34.58.85:8888/",
             "model": "open-clip-vit-b32",
+            "timeoutSeconds": "100",
+            "retries":"1000",
             "classes": "text document,photograph,artwork",
             "threshold": "0.1",
             "top_k": "1"
@@ -58,7 +64,9 @@
           "name": "caption",
           "factory": "ImageCaption",
           "parameters": {
-            "host": "http://10.34.58.85:8888/"
+            "host": "http://10.34.58.85:8888/",
+            "timeoutSeconds": "100",
+            "retries":"1000"
           }
         },
         {
@@ -66,7 +74,9 @@
           "factory": "OCR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
-            "model": "tesseract"
+            "model": "tesseract",
+            "timeoutSeconds": "100",
+            "retries":"1000"
           }
         }
       ],
@@ -91,21 +101,16 @@
       ],
       "extractionPipelines": [
         {
-          "name": "image_tiny",
-          "path": "./pipelines/image-tiny.json"
-        },
-        {
           "name": "image",
           "path": "./pipelines/image.json"
         },
         {
-          "name": "video_tiny",
-          "path": "./pipelines/video-tiny.json"
+          "name": "video_visual",
+          "path": "./pipelines/video-visual.json"
         },
-
         {
-          "name": "video",
-          "path": "./pipelines/video.json"
+          "name": "video_asr",
+          "path": "./pipelines/video-asr.json"
         }
       ]
     }

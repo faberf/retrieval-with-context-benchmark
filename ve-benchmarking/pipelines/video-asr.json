@@ -12,10 +12,13 @@
         "depth": "5"
       },
       "filter": {
-        "type": "SEGMENT"
+        "type": "SOURCE:VIDEO"
       },
-      "decoder": {
-        "timeWindowMs": "2000"
+      "short_decoder": {
+        "timeWindowMs": "5000"
+      },
+      "long_decoder": {
+        "timeWindowMs": "10000"
       }
     }
   },
@@ -27,13 +30,25 @@
         "VIDEO"
       ]
     },
-    "decoder": {
+    "file_metadata":{
+      "type": "EXTRACTOR",
+      "fieldName": "file"
+    },
+    "short_decoder": {
+      "type": "DECODER",
+      "factory": "VideoDecoder"
+    },
+    "long_decoder": {
       "type": "DECODER",
       "factory": "VideoDecoder"
     },
     "selector": {
       "type": "TRANSFORMER",
       "factory": "LastContentAggregator"
+    },
+    "time":{
+      "type": "EXTRACTOR",
+      "fieldName": "time"
     },
     "clip": {
       "type": "EXTRACTOR",
@@ -58,19 +73,13 @@
   },
   "operations": {
     "enumerator-stage": {"operator": "enumerator"},
-    "decoder-stage": {"operator": "decoder","inputs": ["enumerator-stage"]},
-    "filter-stage": {"operator": "filter","inputs": ["decoder-stage"]},
-    "selector-stage": {"operator": "selector","inputs": ["filter-stage"]},
-    "asr-stage": {"operator": "asr", "inputs": ["selector-stage"]},
-    "caption-stage": {"operator": "caption", "inputs": ["selector-stage"]},
-    "clip-stage": {"operator": "clip", "inputs": ["selector-stage"]},
-    "ocr-stage": {"operator": "ocr", "inputs": ["selector-stage"]}
+    "long-decoder-stage": {"operator": "long_decoder","inputs": ["enumerator-stage"]},
+    "file-metadata-stage": {"operator": "file_metadata","inputs": ["long-decoder-stage"]},
+    "time-stage": {"operator": "time","inputs": ["long-decoder-stage"]},
+    "asr-stage": {"operator": "asr", "inputs": ["long-decoder-stage"]},
+    "filter-stage": {"operator": "filter","inputs": ["time-stage", "asr-stage"], "merge": "COMBINE"}
 },
   "output": [
-    "asr-stage",
-    "caption-stage",
-    "clip-stage",
-    "ocr-stage"
-  ],
-  "mergeType": "COMBINE"
+    "filter-stage"
+  ]
 }
