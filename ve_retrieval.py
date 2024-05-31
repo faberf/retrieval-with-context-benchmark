@@ -112,7 +112,7 @@ query_mix = {
                 "lookup": {"field": "time", "keys": "start, end"},
                 "relations" : {"outgoing": "partOf"},				
                 "filelookup": {"field": "file", "keys": "path"},
-                "score": {"weights": "0.5,0.2,0.2,0.1"}
+				"score": {"weights": "0.5,0.2,0.2,0.1"}
             }
         },
         "output": "filelookup"
@@ -140,13 +140,14 @@ def single_query_ve(query, query_template):
     return query_ve(query, query_template)
         
 
-def combined_query_ve(query, query_template):
+def combined_query_ve(query, query_template, weights):
     query_template["inputs"] = {
                 "clip": {"type": "TEXT", "data": query["query"]},
                 "ocr": {"type": "TEXT", "data": query["query"]},
                 "asr": {"type": "TEXT", "data": query["query"]},
                 "caption": {"type": "TEXT", "data": query["query"]}
         }
+    query_template["context"]["local"]["score"]["weights"] = weights
     return query_ve(query, query_template)
 
 
@@ -156,6 +157,12 @@ if __name__ == "__main__":
     
     with open(benchmark_queries, 'r') as file:
         queries = json.load(file)
+
+    weight_clip = 0.5
+    weight_ocr = 0.2
+    weight_asr = 0.2
+    weight_caption = 0.1
+    weights = f"{weight_clip},{weight_ocr},{weight_asr},{weight_caption}"
 
     results_clip = []
     results_asr = []
@@ -167,8 +174,8 @@ if __name__ == "__main__":
         results_asr.append(single_query_ve(query, query_asr))
         results_caption.append(single_query_ve(query, query_caption))
         results_ocr.append(single_query_ve(query, query_ocr))
-        results_mix.append(combined_query_ve(query, query_mix))
-        
+        results_mix.append(combined_query_ve(query, query_mix, weights))
+
     with open(results_path + 'clip.json', 'w') as out:
         json.dump(results_clip, out)
     with open(results_path + 'asr.json', 'w') as out:
