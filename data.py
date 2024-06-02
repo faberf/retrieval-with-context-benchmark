@@ -135,18 +135,18 @@ def load(path):
     image_embeddings = data["image_embeddings"]
     timestamps = data["segments"]
     
-    if os.path.exists("caption_embeddings.json"):
-        with open("caption_embeddings.json", "r") as f:
+    if os.path.exists("offline_benchmarking/caption_embeddings.json"):
+        with open("offline_benchmarking/caption_embeddings.json", "r") as f:
             caption_embeddings = json.load(f)
     
-    if os.path.exists("asr_embeddings.json"):
-        with open("asr_embeddings.json", "r") as f:
+    if os.path.exists("offline_benchmarking/asr_embeddings.json"):
+        with open("offline_benchmarking/asr_embeddings.json", "r") as f:
             asr_embeddings = json.load(f)
     
-    if os.path.exists("query_embeddings.json"):
-        with open("query_embeddings.json", "r") as f:
+    if os.path.exists("offline_benchmarking/query_embeddings.json"):
+        with open("offline_benchmarking/query_embeddings.json", "r") as f:
             query_embeddings = json.load(f)
     
-    if os.path.exists("query_embeddings_clip.json"):
-        with open("query_embeddings_clip.json", "r") as f:
+    if os.path.exists("offline_benchmarking/query_embeddings_clip.json"):
+        with open("offline_benchmarking/query_embeddings_clip.json", "r") as f:
             query_embeddings_clip = json.load(f)
