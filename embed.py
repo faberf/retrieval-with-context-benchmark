@@ -27,10 +27,10 @@ if __name__ == "__main__":
     #     json.dump(caption_embeddings, f)
     # with open("asr_embeddings.json", "w") as f:
     #     json.dump(asr_embeddings, f)
-    with open("query_embeddings.json", "w") as f:
+    with open("offline_benchmarking/query_embeddings.json", "w") as f:
         json.dump(query_embeddings, f)
     
-    with open("query_embeddings_clip.json", "w") as f:
+    with open("offline_benchmarking/query_embeddings_clip.json", "w") as f:
         json.dump(query_embeddings_clip, f)
     
     print("done")

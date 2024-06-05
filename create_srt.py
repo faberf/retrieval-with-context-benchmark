@@ -1,8 +1,8 @@
 
 
 if __name__ == "__main__":
-    captions_path = "cosmir_descriptions-ws_4-t_basic.json"
-    data_path = "data.json"
+    captions_path = "offline_benchmarking/cosmir_descriptions-ws_4-t_basic.json"
+    data_path = "offline_benchmarking/data.json"
     
     import ujson as json
     
@@ -27,4 +27,4 @@ if __name__ == "__main__":
         subs.append(sub)
     
     # save srt captions
-    subs.save("cosmir_descriptions-ws_4-t_basic.srt")
+    subs.save("offline_benchmarking/cosmir_descriptions-ws_4-t_basic.srt")

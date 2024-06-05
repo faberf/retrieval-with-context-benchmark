@@ -81,4 +81,4 @@ def extract_embeddings(base_path, window_size, template_name):
         f.write("[\n"+ ',\n'.join(map( json.dumps, embeddings))+ "\n]")
     
 if __name__ == "__main__":
-    extract_embeddings("cosmir_descriptions", window_size=4, template_name="basic")
+    extract_embeddings("offline_benchmarking/cosmir_descriptions", window_size=4, template_name="basic")

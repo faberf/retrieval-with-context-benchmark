@@ -8,7 +8,7 @@ from torchmetrics.classification import Precision, Recall
 
 model = ClipVitLargePatch14()
 model.load_model()
-load("data.json")
+load("offline_benchmarking/data.json")
 
 from data import queries, image_embeddings, captions, asr_transcripts, timestamps, caption_embeddings, asr_embeddings, query_embeddings, query_embeddings_clip
 
@@ -93,20 +93,20 @@ if __name__ == "__main__":
 
     # CLIP image embeddings
     scores_image = score_segments(image_embeddings, query_embeddings_clip)
-    save_ranks(scores_image, "image_ranks.json")
+    save_ranks(scores_image, "offline_benchmarking/image_ranks.json")
     # mrr_image = mean_reciprocal_rank(scores_image, ground_truth)
     # print(f"Mean Reciprocal Rank for image embeddings: {mrr_image}")
 
     # precision_recall_per_query(scores_image, ground_truth)
 
     scores_asr = score_segments(asr_embeddings, query_embeddings)
-    save_ranks(scores_asr, "asr_ranks.json")
+    save_ranks(scores_asr, "offline_benchmarking/asr_ranks.json")
     # mrr_asr = mean_reciprocal_rank(scores_asr, ground_truth)
     # print(f"Mean Reciprocal Rank for ASR embeddings: {mrr_asr}")
 
     # Image captions
     scores_caption = score_segments(caption_embeddings, query_embeddings)
-    save_ranks(scores_caption, "caption_ranks.json")
+    save_ranks(scores_caption, "offline_benchmarking/caption_ranks.json")
     # mrr = mean_reciprocal_rank(scores_caption, ground_truth)
     # print(f"Mean Reciprocal Rank for image captions: {mrr}")
 
@@ -115,10 +115,10 @@ if __name__ == "__main__":
     # COSMIR
     
     # Load COSMIR embeddings
-    with open("cosmir_descriptions-ws_4-t_basic-embeddings.json", "r") as f:
+    with open("coffline_benchmarking/osmir_descriptions-ws_4-t_basic-embeddings.json", "r") as f:
         cosmir_embeddings = json.load(f)
     scores_cosmir = score_segments(cosmir_embeddings, query_embeddings)
-    save_ranks(scores_cosmir, "cosmir_ranks.json")
+    save_ranks(scores_cosmir, "offline_benchmarking/cosmir_ranks.json")
     # mrr = mean_reciprocal_rank(scores_cosmir, ground_truth)
     # print(f"Mean Reciprocal Rank for COSMIR embeddings: {mrr}")
     
