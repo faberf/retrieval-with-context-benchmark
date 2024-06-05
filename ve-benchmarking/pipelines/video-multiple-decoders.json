@@ -1,14 +1,14 @@
 {
   "schema": "ptt",
   "context": {
-    "contentFactory": "CachedContentFactory",
+    "contentFactory": "InMemoryContentFactory",
     "resolverName": "disk",
     "local": {
       "content": {
         "path": "../cache"
       },
       "enumerator": {
-        "path": "../benchmark/media_objects",
+        "path": "../benchmark/media_objects_tiny",
         "depth": "5"
       },
       "filter": {
@@ -42,29 +42,9 @@
       "type": "DECODER",
       "factory": "VideoDecoder"
     },
-    "selector": {
-      "type": "TRANSFORMER",
-      "factory": "LastContentAggregator"
-    },
     "time":{
       "type": "EXTRACTOR",
       "fieldName": "time"
-    },
-    "clip": {
-      "type": "EXTRACTOR",
-      "fieldName": "clip"
-    },
-    "asr": {
-      "type": "EXTRACTOR",
-      "fieldName": "asr"
-    },
-    "caption": {
-      "type": "EXTRACTOR",
-      "fieldName": "caption"
-    },
-    "ocr": {
-      "type": "EXTRACTOR",
-      "fieldName": "ocr"
     },
     "filter": {
       "type": "TRANSFORMER",
@@ -73,11 +53,11 @@
   },
   "operations": {
     "enumerator-stage": {"operator": "enumerator"},
+    "short-decoder-stage": {"operator": "short_decoder","inputs": ["enumerator-stage"]},
     "long-decoder-stage": {"operator": "long_decoder","inputs": ["enumerator-stage"]},
-    "file-metadata-stage": {"operator": "file_metadata","inputs": ["long-decoder-stage"]},
-    "time-stage": {"operator": "time","inputs": ["file-metadata-stage"]},
-    "asr-stage": {"operator": "asr", "inputs": ["file-metadata-stage"]},
-    "filter-stage": {"operator": "filter","inputs": ["time-stage", "asr-stage"], "merge": "COMBINE"}
+    "time-stage": {"operator": "time","inputs": ["short-decoder-stage", "long-decoder-stage"], "merge": "MERGE"},
+    "filter-stage": {"operator": "filter","inputs": ["time-stage"]}
+
 },
   "output": [
     "filter-stage"

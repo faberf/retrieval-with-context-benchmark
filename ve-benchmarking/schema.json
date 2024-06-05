@@ -27,11 +27,22 @@
           "factory": "VideoSourceMetadata"
         },
         {
-          "name": "asr",
+          "name": "asr_sparse",
           "factory": "ASR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
             "model": "whisper",
+            "timeoutSeconds": "100",
+            "retries":"1000"
+          }
+        },
+        {
+          "name": "asr_dense",
+          "factory": "DenseEmbedding",
+          "parameters": {
+            "host": "http://10.34.58.85:8889/",
+            "model": "e5mistral7b-instruct",
+            "length": "4096",
             "timeoutSeconds": "100",
             "retries":"1000"
           }
@@ -47,6 +58,7 @@
             "retries":"1000"
           }
         },
+
         {
           "name": "document_type",
           "factory": "ImageClassification",
@@ -55,13 +67,13 @@
             "model": "open-clip-vit-b32",
             "timeoutSeconds": "100",
             "retries":"1000",
-            "classes": "text document,photograph,artwork",
+            "classes": "text document,photograph",
             "threshold": "0.1",
             "top_k": "1"
           }
         },
         {
-          "name": "caption",
+          "name": "caption_sparse",
           "factory": "ImageCaption",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
@@ -70,11 +82,33 @@
           }
         },
         {
-          "name": "ocr",
+          "name": "caption_dense",
+          "factory": "DenseEmbedding",
+          "parameters": {
+            "host": "http://10.34.58.85:8889/",
+            "model": "e5mistral7b-instruct",
+            "length": "4096",
+            "timeoutSeconds": "100",
+            "retries":"1000"
+          }
+        },
+        {
+          "name": "ocr_sparse",
           "factory": "OCR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
             "model": "tesseract",
+            "timeoutSeconds": "100",
+            "retries":"1000"
+          }
+        },
+        {
+          "name": "ocr_dense",
+          "factory": "DenseEmbedding",
+          "parameters": {
+            "host": "http://10.34.58.85:8889/",
+            "model": "e5mistral7b-instruct",
+            "length": "4096",
             "timeoutSeconds": "100",
             "retries":"1000"
           }
@@ -101,16 +135,8 @@
       ],
       "extractionPipelines": [
         {
-          "name": "image",
-          "path": "./pipelines/image.json"
-        },
-        {
-          "name": "video_visual",
-          "path": "./pipelines/video-visual.json"
-        },
-        {
-          "name": "video_asr",
-          "path": "./pipelines/video-asr.json"
+          "name": "full",
+          "path": "./pipelines/full-pipeline.json"
         }
       ]
     }
