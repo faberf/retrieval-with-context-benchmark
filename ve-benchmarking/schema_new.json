@@ -27,7 +27,7 @@
           "factory": "VideoSourceMetadata"
         },
         {
-          "name": "asr",
+          "name": "asr_sparse",
           "factory": "ASR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
@@ -73,7 +73,7 @@
           }
         },
         {
-          "name": "caption",
+          "name": "caption_sparse",
           "factory": "ImageCaption",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
@@ -93,7 +93,7 @@
           }
         },
         {
-          "name": "ocr",
+          "name": "ocr_sparse",
           "factory": "OCR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
