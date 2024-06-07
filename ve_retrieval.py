@@ -1,6 +1,6 @@
 import json
 import requests
-
+import os
 
 api_url = 'http://localhost:7070/api/ptt/query'
 
@@ -8,89 +8,32 @@ headers = {
     'Content-Type': 'application/json'
 }
 
-query_clip = {
-        "operations": {
-            "clip" : {"type": "RETRIEVER", "field": "clip", "input": "text"},
-            "relations" : {"type": "TRANSFORMER", "transformerName": "RelationExpander", "input": "clip"},
-            "lookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "relations"},
-            "aggregator" : {"type": "TRANSFORMER", "transformerName": "ScoreAggregator",  "input": "lookup"},
-            "filelookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "aggregator"}
-        },
-        "context": {
-            "global": {
-                "limit": "1000"
-            },
-            "local" : {
-                "lookup":{"field": "time", "keys": "start, end"},
-                "relations" :{"outgoing": "partOf"},				
-                "filelookup": {"field": "file", "keys": "path"}
-            }
-        },
-        "output": "filelookup"
-}
 
-query_asr = {
+def create_query_template(field):
+    return {
         "operations": {
-            "feature" : {"type": "RETRIEVER", "field": "asr", "input": "text"},
-            "relations" : {"type": "TRANSFORMER", "transformerName": "RelationExpander", "input": "feature"},
-            "lookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "relations"},
-            "aggregator" : {"type": "TRANSFORMER", "transformerName": "ScoreAggregator",  "input": "lookup"},
-            "filelookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "aggregator"}
+            "feature": {"type": "RETRIEVER", "field": field, "input": "text"},
+            "relations": {"type": "TRANSFORMER", "transformerName": "RelationExpander", "input": "feature"},
+            "lookup": {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "relations"},
+            "aggregator": {"type": "TRANSFORMER", "transformerName": "ScoreAggregator", "input": "lookup"},
+            "filelookup": {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "aggregator"}
         },
         "context": {
-            "global": {
-                "limit": "1000"
-            },
-            "local" : {
+            "global": {"limit": "1000"},
+            "local": {
                 "lookup": {"field": "time", "keys": "start, end"},
-                "relations" : {"outgoing": "partOf"},				
+                "relations": {"outgoing": "partOf"},
                 "filelookup": {"field": "file", "keys": "path"}
             }
         },
         "output": "filelookup"
-}
+    }
 
-query_caption = {
-        "operations": {
-            "feature" : {"type": "RETRIEVER", "field": "caption", "input": "text"},
-            "relations" : {"type": "TRANSFORMER", "transformerName": "RelationExpander", "input": "feature"},
-            "lookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "relations"},
-            "aggregator" : {"type": "TRANSFORMER", "transformerName": "ScoreAggregator",  "input": "lookup"},
-            "filelookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "aggregator"}
-        },
-        "context": {
-            "global": {
-                "limit": "1000"
-            },
-            "local" : {
-                "lookup": {"field": "time", "keys": "start, end"},
-                "relations" : {"outgoing": "partOf"},				
-                "filelookup": {"field": "file", "keys": "path"}
-            }
-        },
-        "output": "filelookup"
-}
 
-query_ocr = {
-        "operations": {
-            "feature" : {"type": "RETRIEVER", "field": "ocr", "input": "text"},
-            "relations" : {"type": "TRANSFORMER", "transformerName": "RelationExpander", "input": "feature"},
-            "lookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "relations"},
-            "aggregator" : {"type": "TRANSFORMER", "transformerName": "ScoreAggregator",  "input": "lookup"},
-            "filelookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "aggregator"}
-        },
-        "context": {
-            "global": {
-                "limit": "1000"
-            },
-            "local" : {
-                "lookup": {"field": "time", "keys": "start, end"},
-                "relations" : {"outgoing": "partOf"},				
-                "filelookup": {"field": "file", "keys": "path"}
-            }
-        },
-        "output": "filelookup"
-}
+query_clip = create_query_template("clip")
+query_asr = create_query_template("asr")
+query_caption = create_query_template("caption")
+query_ocr = create_query_template("ocr")
 
 query_mix = {
         "operations": {
@@ -151,6 +94,11 @@ def combined_query_ve(query, query_template, weights):
     return query_ve(query, query_template)
 
 
+def save_results(results, results_path, filename):
+    with open(os.path.join(results_path, filename), 'w') as out:
+        json.dump(results, out)
+
+
 if __name__ == "__main__":
     benchmark_queries = 've-benchmarking/benchmark_queries.json'
     results_path = 've-benchmarking/query_results/'
@@ -158,31 +106,30 @@ if __name__ == "__main__":
     with open(benchmark_queries, 'r') as file:
         queries = json.load(file)
 
-    weight_clip = 0.5
-    weight_ocr = 0.2
-    weight_asr = 0.2
-    weight_caption = 0.1
+    weight_clip = 0.9
+    weight_ocr = 0.033
+    weight_asr = 0.033
+    weight_caption = 0.033
     weights = f"{weight_clip},{weight_ocr},{weight_asr},{weight_caption}"
 
-    results_clip = []
-    results_asr = []
-    results_caption = []
-    results_ocr = []
-    results_mix = []
-    for query in queries:
-        results_clip.append(single_query_ve(query, query_clip))
-        results_asr.append(single_query_ve(query, query_asr))
-        results_caption.append(single_query_ve(query, query_caption))
-        results_ocr.append(single_query_ve(query, query_ocr))
-        results_mix.append(combined_query_ve(query, query_mix, weights))
 
-    with open(results_path + 'clip.json', 'w') as out:
-        json.dump(results_clip, out)
-    with open(results_path + 'asr.json', 'w') as out:
-        json.dump(results_asr, out)
-    with open(results_path + 'caption.json', 'w') as out:
-        json.dump(results_caption, out)
-    with open(results_path + 'ocr.json', 'w') as out:
-        json.dump(results_ocr, out)
-    with open(results_path + 'mix.json', 'w') as out:
-        json.dump(results_mix, out)
+    results = {
+        "clip": [],
+        "asr": [],
+        "caption": [],
+        "ocr": [],
+        "mix": []
+    }
+
+    for query in queries:
+        results["clip"].append(single_query_ve(query, query_clip))
+        results["asr"].append(single_query_ve(query, query_asr))
+        results["caption"].append(single_query_ve(query, query_caption))
+        results["ocr"].append(single_query_ve(query, query_ocr))
+        results["mix"].append(combined_query_ve(query, query_mix, weights))
+
+    save_results(results["clip"], results_path, 'clip.json')
+    save_results(results["asr"], results_path, 'asr.json')
+    save_results(results["caption"], results_path, 'caption.json')
+    save_results(results["ocr"], results_path, 'ocr.json')
+    save_results(results["mix"], results_path, 'mix.json')
