@@ -106,10 +106,10 @@ if __name__ == "__main__":
     with open(benchmark_queries, 'r') as file:
         queries = json.load(file)
 
-    weight_clip = 0.5
-    weight_ocr = 0.2
-    weight_asr = 0.2
-    weight_caption = 0.1
+    weight_clip = 0.9
+    weight_ocr = 0.033
+    weight_asr = 0.033
+    weight_caption = 0.033
     weights = f"{weight_clip},{weight_ocr},{weight_asr},{weight_caption}"
 
 
