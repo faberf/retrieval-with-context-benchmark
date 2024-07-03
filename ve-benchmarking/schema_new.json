@@ -30,7 +30,7 @@
           "name": "asr_sparse",
           "factory": "ASR",
           "parameters": {
-            "host": "http://10.34.58.85:8888/",
+            "host": "http://10.34.64.84:8888/",
             "model": "whisper",
             "timeoutSeconds": "100",
             "retries":"1000"
@@ -40,7 +40,7 @@
           "name": "asr_dense",
           "factory": "DenseEmbedding",
           "parameters": {
-            "host": "http://10.34.58.85:8889/",
+            "host": "http://10.34.64.84:8888/",
             "model": "e5mistral7b-instruct",
             "length": "4096",
             "timeoutSeconds": "100",
@@ -51,7 +51,7 @@
           "name": "clip",
           "factory": "DenseEmbedding",
           "parameters": {
-            "host": "http://10.34.58.85:8888/",
+            "host": "http://10.34.64.84:8888/",
             "model": "open-clip-vit-b32",
             "length": "512",
             "timeoutSeconds": "100",
@@ -63,7 +63,7 @@
           "name": "document_type",
           "factory": "ImageClassification",
           "parameters": {
-            "host": "http://10.34.58.85:8888/",
+            "host": "http://10.34.64.84:8888/",
             "model": "open-clip-vit-b32",
             "timeoutSeconds": "100",
             "retries":"1000",
@@ -76,7 +76,7 @@
           "name": "caption_sparse",
           "factory": "ImageCaption",
           "parameters": {
-            "host": "http://10.34.58.85:8888/",
+            "host": "http://10.34.64.84:8888/",
             "timeoutSeconds": "100",
             "retries":"1000"
           }
@@ -85,7 +85,7 @@
           "name": "caption_dense",
           "factory": "DenseEmbedding",
           "parameters": {
-            "host": "http://10.34.58.85:8889/",
+            "host": "http://10.34.64.84:8888/",
             "model": "e5mistral7b-instruct",
             "length": "4096",
             "timeoutSeconds": "100",
@@ -96,7 +96,7 @@
           "name": "ocr_sparse",
           "factory": "OCR",
           "parameters": {
-            "host": "http://10.34.58.85:8888/",
+            "host": "http://10.34.64.84:8888/",
             "model": "tesseract",
             "timeoutSeconds": "100",
             "retries":"1000"
@@ -106,7 +106,7 @@
           "name": "ocr_dense",
           "factory": "DenseEmbedding",
           "parameters": {
-            "host": "http://10.34.58.85:8889/",
+            "host": "http://10.34.64.84:8888/",
             "model": "e5mistral7b-instruct",
             "length": "4096",
             "timeoutSeconds": "100",
