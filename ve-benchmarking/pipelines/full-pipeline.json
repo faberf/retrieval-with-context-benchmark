@@ -188,11 +188,14 @@
     "asr-stage": {"operator": "asr_dense", "inputs": ["asr-content-stage"]},
     "photograph-final-stage": {"operator": "passthrough", "inputs": ["photograph-clip-stage", "photograph-ocr-stage", "photograph-caption-stage"], "merge": "COMBINE"},
     "document-final-stage": {"operator": "passthrough", "inputs": ["document-ocr-stage"]},
-    "video-filter-stage": {"operator": "video_source_filter", "inputs": ["video-ocr-stage", "asr-stage", "video-caption-stage", "video-clip-stage"], "merge": "COMBINE"},
-    "image-filter-stage": {"operator": "image_source_filter", "inputs": ["document-final-stage", "photograph-final-stage"], "merge": "MERGE"},
-    "file-metadata-stage": {"operator": "file_metadata", "inputs": ["video-filter-stage", "image-filter-stage"], "merge": "MERGE"}
+    "video-file-metadata-stage": {"operator": "file_metadata", "inputs": ["video-ocr-stage", "asr-stage", "video-caption-stage", "video-clip-stage"], "merge": "COMBINE"},
+    "image-file-metadata-stage": {"operator": "file_metadata", "inputs": ["document-final-stage", "photograph-final-stage"], "merge": "MERGE"},
+    "video-filter-stage": {"operator": "video_source_filter", "inputs": ["video-file-metadata-stage"]},
+    "image-filter-stage": {"operator": "image_source_filter", "inputs": ["image-file-metadata-stage"]}
   },
   "output": [ 
-    "file-metadata-stage"
-  ]
+    "video-filter-stage",
+    "image-filter-stage"
+  ],
+  "mergeType": "MERGE"
 }
