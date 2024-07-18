@@ -31,20 +31,7 @@
           "factory": "ASR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
-            "model": "whisper",
-            "timeoutSeconds": "100",
-            "retries":"1000"
-          }
-        },
-        {
-          "name": "asr_dense",
-          "factory": "DenseEmbedding",
-          "parameters": {
-            "host": "http://10.34.58.85:8889/",
-            "model": "e5mistral7b-instruct",
-            "length": "4096",
-            "timeoutSeconds": "100",
-            "retries":"1000"
+            "model": "whisper"
           }
         },
         {
@@ -53,21 +40,16 @@
           "parameters": {
             "host": "http://10.34.58.85:8888/",
             "model": "open-clip-vit-b32",
-            "length": "512",
-            "timeoutSeconds": "100",
-            "retries":"1000"
+            "length": "512"
           }
         },
-
         {
           "name": "document_type",
           "factory": "ImageClassification",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
             "model": "open-clip-vit-b32",
-            "timeoutSeconds": "100",
-            "retries":"1000",
-            "classes": "text document,photograph",
+            "classes": "text document,photograph,artwork",
             "threshold": "0.1",
             "top_k": "1"
           }
@@ -76,20 +58,7 @@
           "name": "caption",
           "factory": "ImageCaption",
           "parameters": {
-            "host": "http://10.34.58.85:8888/",
-            "timeoutSeconds": "100",
-            "retries":"1000"
-          }
-        },
-        {
-          "name": "caption_dense",
-          "factory": "DenseEmbedding",
-          "parameters": {
-            "host": "http://10.34.58.85:8889/",
-            "model": "e5mistral7b-instruct",
-            "length": "4096",
-            "timeoutSeconds": "100",
-            "retries":"1000"
+            "host": "http://10.34.58.85:8888/"
           }
         },
         {
@@ -97,20 +66,7 @@
           "factory": "OCR",
           "parameters": {
             "host": "http://10.34.58.85:8888/",
-            "model": "tesseract",
-            "timeoutSeconds": "100",
-            "retries":"1000"
-          }
-        },
-        {
-          "name": "ocr_dense",
-          "factory": "DenseEmbedding",
-          "parameters": {
-            "host": "http://10.34.58.85:8889/",
-            "model": "e5mistral7b-instruct",
-            "length": "4096",
-            "timeoutSeconds": "100",
-            "retries":"1000"
+            "model": "tesseract"
           }
         }
       ],
@@ -131,12 +87,6 @@
             "maxSideResolution": "400",
             "mimeType": "JPG"
           }
-        }
-      ],
-      "extractionPipelines": [
-        {
-          "name": "full",
-          "path": "./pipelines/full-pipeline.json"
         }
       ]
     }
