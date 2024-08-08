@@ -194,7 +194,6 @@
     "image-filter-stage": {"operator": "image_source_filter", "inputs": ["image-file-metadata-stage"]}
   },
   "output": [ 
-    "video-filter-stage",
     "image-filter-stage"
   ],
   "mergeType": "MERGE"
