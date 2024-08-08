@@ -76,9 +76,11 @@
           "name": "caption_sparse",
           "factory": "ImageCaption",
           "parameters": {
-            "host": "http://10.34.64.84:8888/",
+            "host": "http://localhost:8888/",
             "timeoutSeconds": "100",
-            "retries":"1000"
+            "retries":"1000",
+            "model": "gpt4o",
+            "prompt": "Describe the contents of this image to help document the image and to aid archivists in searching for the image. Use information from the internet to enhance the description. The image is part of the PTT Archive which preserves the history (1848-1997) of Swiss Post, Telegraphy and Telephony (PTT)."
           }
         },
         {
