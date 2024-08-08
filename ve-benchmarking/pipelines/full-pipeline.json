@@ -205,8 +205,12 @@
     "image-filter-stage": {"operator": "image_source_filter", "inputs": ["image-file-metadata-stage"]}
   },
   "output": [ 
+<<<<<<< HEAD
     "image-filter-stage",
     "video-filter-stage"
+=======
+    "image-filter-stage"
+>>>>>>> 105a6eabd9e5abf339cc288cc12ffef33054f738
   ],
   "mergeType": "MERGE"
 }
