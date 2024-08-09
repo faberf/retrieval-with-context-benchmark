@@ -39,10 +39,11 @@ MIME_TYPES = {
     'image/tiff': 'tiff',
 }
 
+Image.MAX_IMAGE_PIXELS = 933120000
 
 def main(args=None):
-    filename = args.data_root_path + 'wit_v1.train.all-1percent_sample.tsv'
-    filename_out = args.data_root_path + 'wit_v1.train.all-1percent_sample_with_image_path.csv'
+    filename = args.data_raw_path + 'wit_v1.train.all-1percent_sample.tsv'
+    filename_out = args.datap_path + 'wit_v1.train.all-1percent_sample.csv'
     logger.info(f'Start reading file: {filename}')
     data = pd.read_csv(filename, sep='\t')
     logger.debug(f'File read successfully: {data.shape}')
@@ -54,16 +55,18 @@ def main(args=None):
 
 
 def add_exif_metadata(image_path, json_object):
-    # Convert JSON object to string
-    json_str = json.dumps(json_object)
-
-    # Open the image
-    img = Image.open(image_path)
-
-    if img.info.get("exif") is None:
-        img.info["exif"] = piexif.dump({})
-
     try:
+        # Convert JSON object to string
+        json_str = json.dumps(json_object)
+
+        # Open the image
+
+        img = Image.open(image_path)
+
+        if img.info.get("exif") is None:
+            img.info["exif"] = piexif.dump({})
+
+
         # Load existing EXIF data
         exif_dict = piexif.load(img.info["exif"])
 
@@ -127,9 +130,12 @@ def retry_download_image(image_url, image_path) -> bool:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-dr', '--data-root-path',
-                        default=r'D:/wit/data/')
-    parser.add_argument('-ir', '--images-root-path',
-                        default=r'D:/wit/images/')
+    parser.add_argument('-dr', '--data-raw-path',
+                        default=r'/mnt/nas/data-raw/')
+    parser.add_argument('-i', '--images-path',
+                        default=r'/mnt/nas/images/')
+    parser.add_argument('-d', '--data-path',
+                        default=r'/mnt/nas/data/')
+
     args = parser.parse_args()
     main(args)
