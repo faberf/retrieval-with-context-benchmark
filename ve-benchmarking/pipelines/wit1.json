@@ -1,0 +1,200 @@
+{
+  "schema": "wit",
+  "context": {
+    "contentFactory": "CachedContentFactory",
+    "resolverName": "disk",
+    "local": {
+      "content": {
+        "path": "../cache"
+      },
+      "enumerator": {
+        "path": "D:\\\\wit\\images10e1",
+        "depth": "5"
+      },
+      "imageSourceFilter": {
+        "type": "SOURCE:IMAGE"
+      },
+      "videoSourceFilter": {
+        "type": "SOURCE:VIDEO"
+      },
+      "ocrContent": {
+        "field": "ocrSparse",
+        "removeContent": "true"
+      },
+      "asrContent": {
+        "field": "asrSparse",
+        "removeContent": "true"
+      },
+      "captionContent": {
+        "field": "captionSparse",
+        "removeContent": "true"
+      },
+      "documentFilter": {
+        "label": "text document",
+        "value": "true"
+      },
+      "photographFilter": {
+        "label": "photograph",
+        "value": "true"
+      },
+      "videoDecoder": {
+        "timeWindowMs": "10000"
+      },
+      "clip": {
+        "contentSources": "selector,imageDecoder"
+      },
+      "ocrSparse": {
+        "contentSources": "imageDecoder,selector"
+      },
+      "captionSparse": {
+        "contentSources": "imageDecoder,selector"
+      },
+      "asrSparse": {
+        "contentSources": "videoDecoder"
+      },
+      "ocrDense": {
+        "contentSources": "ocrContent"
+      },
+      "captionDense": {
+        "contentSources": "captionContent"
+      },
+      "asrDense": {
+        "contentSources": "asrContent"
+      },
+      "documentType": {
+        "contentSources": "imageDecoder"
+      }
+    }
+  },
+  "operators": {
+    "passthrough": {
+      "type": "TRANSFORMER",
+      "factory": "PassthroughTransformer"
+    },
+    "enumerator": {
+      "type": "ENUMERATOR",
+      "factory": "FileSystemEnumerator",
+      "mediaTypes": ["IMAGE", "VIDEO"]
+    },
+    "imageDecoder": {
+      "type": "DECODER",
+      "factory": "ImageDecoder"
+    },
+    "videoDecoder": {
+      "type": "DECODER",
+      "factory": "VideoDecoder"
+    },
+    "fileMetadata":{
+      "type": "EXTRACTOR",
+      "fieldName": "file"
+    },
+    "clip": {
+      "type": "EXTRACTOR",
+      "fieldName": "clip"
+    },
+    "ocrSparse": {
+      "type": "EXTRACTOR",
+      "fieldName": "ocrSparse"
+    },
+    "captionSparse": {
+      "type": "EXTRACTOR",
+      "fieldName": "captionSparse"
+    },
+    "asrSparse": {
+      "type": "EXTRACTOR",
+      "fieldName": "asrSparse"
+    },
+    "ocrDense": {
+      "type": "EXTRACTOR",
+      "fieldName": "ocrDense"
+    },
+    "captionDense": {
+      "type": "EXTRACTOR",
+      "fieldName": "captionDense"
+    },
+    "asrDense": {
+      "type": "EXTRACTOR",
+      "fieldName": "asrDense"
+    },
+    "documentType": {
+      "type": "EXTRACTOR",
+      "fieldName": "documentType"
+    },
+    "imageSourceFilter": {
+      "type": "TRANSFORMER",
+      "factory": "TypeFilterTransformer"
+    },
+    "videoSourceFilter": {
+      "type": "TRANSFORMER",
+      "factory": "TypeFilterTransformer"
+    },
+    "ocrContent": {
+      "type": "TRANSFORMER",
+      "factory": "DescriptorAsContentTransformer"
+    },
+    "asrContent": {
+      "type": "TRANSFORMER",
+      "factory": "DescriptorAsContentTransformer"
+    },
+    "captionContent": {
+      "type": "TRANSFORMER",
+      "factory": "DescriptorAsContentTransformer"
+    },
+    "documentFilter": {
+      "type": "TRANSFORMER",
+      "factory": "LabelFilterTransformer"
+    },
+    "photographFilter": {
+      "type": "TRANSFORMER",
+      "factory": "LabelFilterTransformer"
+    },
+    "selector": {
+      "type": "TRANSFORMER",
+      "factory": "LastContentAggregator"
+    },
+    "time":{
+      "type": "EXTRACTOR",
+      "fieldName": "time"
+    }
+  },
+  "operations": {
+    "enumerator-stage": {"operator": "enumerator"},
+    "video-decoder-stage": {"operator": "videoDecoder", "inputs": ["enumerator-stage"]},
+    "time-stage": {"operator": "time","inputs": ["video-decoder-stage"]},
+    "image-decoder-stage": {"operator": "imageDecoder", "inputs": ["enumerator-stage"]},
+    "selector-stage": {"operator": "selector", "inputs": ["time-stage"]},
+    "video-clip-stage": {"operator": "clip", "inputs": ["selector-stage"]},
+    "image-classification-stage": {"operator": "documentType", "inputs": ["image-decoder-stage"]},
+    "photograph-stage": {"operator": "photographFilter", "inputs": ["image-classification-stage"]},
+    "document-stage": {"operator": "documentFilter", "inputs": ["image-classification-stage"]},
+    "photograph-clip-stage": {"operator": "clip", "inputs": ["photograph-stage"]},
+    "photograph-ocr-sparse-stage": {"operator": "ocrSparse", "inputs": ["photograph-stage"]},
+    "photograph-ocr-content-stage": {"operator": "ocrContent", "inputs": ["photograph-ocr-sparse-stage"]},
+    "photograph-ocr-stage": {"operator": "ocrDense", "inputs": ["photograph-ocr-content-stage"]},
+    "photograph-caption-sparse-stage": {"operator": "captionSparse", "inputs": ["photograph-stage"]},
+    "photograph-caption-content-stage": {"operator": "captionContent", "inputs": ["photograph-caption-sparse-stage"]},
+    "photograph-caption-stage": {"operator": "captionDense", "inputs": ["photograph-caption-content-stage"]},
+    "document-ocr-sparse-stage": {"operator": "ocrSparse", "inputs": ["document-stage"]},
+    "document-ocr-content-stage": {"operator": "ocrContent", "inputs": ["document-ocr-sparse-stage"]},
+    "document-ocr-stage": {"operator": "ocrDense", "inputs": ["document-ocr-content-stage"]},
+    "video-ocr-sparse-stage": {"operator": "ocrSparse", "inputs": ["selector-stage"]},
+    "video-ocr-content-stage": {"operator": "ocrContent", "inputs": ["video-ocr-sparse-stage"]},
+    "video-ocr-stage": {"operator": "ocrDense", "inputs": ["video-ocr-content-stage"]},
+    "video-caption-sparse-stage": {"operator": "captionSparse", "inputs": ["selector-stage"]},
+    "video-caption-content-stage": {"operator": "captionContent", "inputs": ["video-caption-sparse-stage"]},
+    "video-caption-stage": {"operator": "captionDense", "inputs": ["video-caption-content-stage"]},
+    "asr-sparse-stage": {"operator": "asrSparse", "inputs": ["time-stage"]},
+    "asr-content-stage": {"operator": "asrContent", "inputs": ["asr-sparse-stage"]},
+    "asr-stage": {"operator": "asrDense", "inputs": ["asr-content-stage"]},
+    "photograph-final-stage": {"operator": "passthrough", "inputs": ["photograph-clip-stage", "photograph-ocr-stage", "photograph-caption-stage"], "merge": "COMBINE"},
+    "document-final-stage": {"operator": "passthrough", "inputs": ["document-ocr-stage"]},
+    "video-file-metadata-stage": {"operator": "fileMetadata", "inputs": ["video-ocr-stage", "asr-stage", "video-caption-stage", "video-clip-stage"], "merge": "COMBINE"},
+    "image-file-metadata-stage": {"operator": "fileMetadata", "inputs": ["document-final-stage", "photograph-final-stage"], "merge": "MERGE"},
+    "video-filter-stage": {"operator": "videoSourceFilter", "inputs": ["video-file-metadata-stage"]},
+    "image-filter-stage": {"operator": "imageSourceFilter", "inputs": ["image-file-metadata-stage"]}
+  },
+  "output": [ 
+    "image-filter-stage"
+  ],
+  "mergeType": "MERGE"
+}
