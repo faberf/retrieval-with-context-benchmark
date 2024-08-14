@@ -246,7 +246,8 @@
     "image-filter-stage": {"operator": "image_source_filter", "inputs": ["document-final-stage", "photograph-final-stage"], "merge": "MERGE"}
   },
   "output": [ 
-    "video-filter-stage"
+    "video-filter-stage",
+    "image-filter-stage"
   ],
   "mergeType": "MERGE"
 }

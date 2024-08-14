@@ -3,10 +3,12 @@
     {
       "name": "ptt",
       "connection": {
-        "database": "CottontailConnectionProvider",
+        "database": "PgVectorConnectionProvider",
         "parameters": {
-          "Host": "127.0.0.1",
-          "port": "1865"
+          "host": "10.34.64.130",
+          "port": "5432",
+          "username": "postgres",
+          "password": "admin"
         }
       },
       "fields": [
@@ -76,7 +78,7 @@
           "name": "captionSparse",
           "factory": "ImageCaption",
           "parameters": {
-            "host": "http://localhost:8888/",
+            "host": "http://10.34.64.84:8888/",
             "timeoutSeconds": "100",
             "retries":"1000",
             "model": "gpt4o"
