@@ -2,7 +2,6 @@ import argparse
 import json
 import time
 
-import tensorflow as tf
 import pandas as pd
 import urllib.request
 from PIL import Image
@@ -43,12 +42,12 @@ Image.MAX_IMAGE_PIXELS = 933120000
 
 def main(args=None):
     filename = args.data_raw_path + 'wit_v1.train.all-1percent_sample.tsv'
-    filename_out = args.datap_path + 'wit_v1.train.all-1percent_sample.csv'
+    filename_out = args.data_path + 'wit_v1.train.all-1percent_sample.csv'
     logger.info(f'Start reading file: {filename}')
     data = pd.read_csv(filename, sep='\t')
     logger.debug(f'File read successfully: {data.shape}')
     data.insert(0, 'image_path', None)
-    download_images(data, args.images_root_path, filename_out)
+    download_images(data, args.images_path, filename_out)
 
     pass
 
@@ -81,11 +80,67 @@ def add_exif_metadata(image_path, json_object):
         logger.warning(f'Error adding JSON data to {image_path}')
 
 
+import requests
+from urllib.parse import urlparse, unquote
+
+def get_wikipedia_language_and_title_from_url(url):
+    """
+    Extracts the Wikipedia language code and article title from a given Wikipedia URL.
+    """
+    parsed_url = urlparse(url)
+    language_code = parsed_url.netloc.split('.')[0]
+    title = parsed_url.path.split('/')[-1]
+    return language_code, unquote(title)
+
+def get_wikipedia_categories(language_code, title):
+    """
+    Fetches the categories of a given Wikipedia article using the Wikipedia API in the appropriate language.
+    """
+    api_url = f"https://{language_code}.wikipedia.org/w/api.php"
+    params = {
+        "action": "query",
+        "format": "json",
+        "prop": "categories",
+        "titles": title,
+        "cllimit": "max"
+    }
+    
+    response = requests.get(api_url, params=params)
+    data = response.json()
+
+    # Extract categories from the API response
+    pages = data.get('query', {}).get('pages', {})
+    for page_id, page_info in pages.items():
+        if 'categories' in page_info:
+            categories = [category['title'] for category in page_info['categories']]
+            return categories
+    
+    return []
+
+import random
+
 def download_images(data: pd.DataFrame, images_root_path, filename_out):
     for idx, row in data.iterrows():
         if DEBUG and idx > 10:
             break
         image_url = row['image_url']
+        language, title = get_wikipedia_language_and_title_from_url(row["page_url"])
+        categories=get_wikipedia_categories(language, title)
+        # select random category
+        random_category = random.sample(categories, min(1, len(categories)))
+        
+        # select two random categories
+        two_random_categories = random.sample(categories, min(2, len(categories)))
+        
+        # select five random categories
+        five_random_categories = random.sample(categories, min(5, len(categories)))
+        
+        data.at[idx, 'categories'] = categories
+        data.at[idx, 'random_category'] = random_category
+        data.at[idx, 'two_random_categories'] = two_random_categories
+        data.at[idx, 'five_random_categories'] = five_random_categories
+        
+        
         try:
             mime = MIME_TYPES[row['mime_type']]
         except:
@@ -100,7 +155,7 @@ def download_images(data: pd.DataFrame, images_root_path, filename_out):
             add_exif_metadata(image_path, row.to_dict())
             if idx % 100 == 0:
                 logger.info(f'Processed {idx} images')
-                data.to_csv(args.data_root_path + 'wit_v1.train.all-1percent_sample_with_image_path.csv', encoding='utf-8-sig')
+                data.to_csv(args.data_raw_path + 'wit_v1.train.all-1percent_sample_with_image_path.csv', encoding='utf-8-sig')
         else:
             data.drop(idx, inplace=True)
     pass
