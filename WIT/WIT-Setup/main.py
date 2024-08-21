@@ -119,6 +119,158 @@ def get_wikipedia_categories(language_code, title):
 
 import random
 
+def get_wikidata_id(language_code, title):
+    """
+    Fetches the Wikidata ID associated with the given Wikipedia article using the Wikipedia API.
+    """
+    api_url = f"https://{language_code}.wikipedia.org/w/api.php"
+    params = {
+        "action": "query",
+        "format": "json",
+        "prop": "pageprops",
+        "titles": title,
+    }
+    
+    response = requests.get(api_url, params=params)
+    data = response.json()
+
+    # Extract Wikidata ID from the API response
+    pages = data.get('query', {}).get('pages', {})
+    for page_id, page_info in pages.items():
+        if 'pageprops' in page_info and 'wikibase_item' in page_info['pageprops']:
+            return page_info['pageprops']['wikibase_item']
+    
+    return None
+
+from langchain_openai import ChatOpenAI
+from langchain.prompts import PromptTemplate
+import json
+
+# Initialize the OpenAI model (make sure you have configured your OpenAI API key)
+openai = ChatOpenAI(temperature=0)
+
+def filter_semantic_categories(categories):
+    # Define the prompt template with format instructions
+    prompt_template = PromptTemplate(
+        input_variables=["categories"],
+        template="""
+Given the following list of categories:
+{categories}
+
+Filter this list to only include categories relating to the content or meaning of the articles (reflecting what the articles are about) and do not include any categories related to the organization, maintenance, or completeness of the articles.
+
+Please return the filtered list in valid JSON format as a list of strings.
+"""
+    )
+
+    # Format the prompt with the provided categories
+    prompt = prompt_template.format(categories=categories)
+    
+    # Use the OpenAI model to generate the response
+    response = openai(prompt).content
+    
+    # Parse the JSON output
+    try:
+        filtered_categories = json.loads(response)
+    except json.JSONDecodeError:
+        return filter_semantic_categories(categories)
+
+    return filtered_categories
+
+def classify_wikipedia_description(description):
+    # Define the prompt template with format instructions
+    prompt_template = PromptTemplate(
+        input_variables=["description", "categories"],
+        template="""
+You are a classifier that categorizes Wikipedia article descriptions into predefined categories. 
+
+Given the following Wikipedia article description:
+{description}
+
+Classify it into one of these categories:
+{categories}
+
+Please provide only the category name as the output.
+"""
+    )
+    
+    # Format the categories into a string for the prompt
+    categories_str = "\n".join([
+        'Culture.Biography.Biography*',
+        'Culture.Biography.Women',
+        'Culture.Food and drink',
+        'Culture.Internet culture',
+        'Culture.Linguistics',
+        'Culture.Literature',
+        'Culture.Media.Books',
+        'Culture.Media.Entertainment',
+        'Culture.Media.Films',
+        'Culture.Media.Media*',
+        'Culture.Media.Music',
+        'Culture.Media.Radio',
+        'Culture.Media.Software',
+        'Culture.Media.Television',
+        'Culture.Media.Video games',
+        'Culture.Performing arts',
+        'Culture.Philosophy and religion',
+        'Culture.Sports',
+        'Culture.Visual arts.Architecture',
+        'Culture.Visual arts.Comics and Anime',
+        'Culture.Visual arts.Fashion',
+        'Culture.Visual arts.Visual arts*',
+        'Geography.Geographical',
+        'Geography.Regions.Africa.Africa*',
+        'Geography.Regions.Africa.Central Africa',
+        'Geography.Regions.Africa.Eastern Africa',
+        'Geography.Regions.Africa.Northern Africa',
+        'Geography.Regions.Africa.Southern Africa',
+        'Geography.Regions.Africa.Western Africa',
+        'Geography.Regions.Americas.Central America',
+        'Geography.Regions.Americas.North America',
+        'Geography.Regions.Americas.South America',
+        'Geography.Regions.Asia.Asia*',
+        'Geography.Regions.Asia.Central Asia',
+        'Geography.Regions.Asia.East Asia',
+        'Geography.Regions.Asia.North Asia',
+        'Geography.Regions.Asia.South Asia',
+        'Geography.Regions.Asia.Southeast Asia',
+        'Geography.Regions.Asia.West Asia',
+        'Geography.Regions.Europe.Eastern Europe',
+        'Geography.Regions.Europe.Europe*',
+        'Geography.Regions.Europe.Northern Europe',
+        'Geography.Regions.Europe.Southern Europe',
+        'Geography.Regions.Europe.Western Europe',
+        'Geography.Regions.Oceania',
+        'History and Society.Business and economics',
+        'History and Society.Education',
+        'History and Society.History',
+        'History and Society.Military and warfare',
+        'History and Society.Politics and government',
+        'History and Society.Society',
+        'History and Society.Transportation',
+        'STEM.Biology',
+        'STEM.Chemistry',
+        'STEM.Computing',
+        'STEM.Earth and environment',
+        'STEM.Engineering',
+        'STEM.Libraries & Information',
+        'STEM.Mathematics',
+        'STEM.Medicine & Health',
+        'STEM.Physics',
+        'STEM.STEM*',
+        'STEM.Space',
+        'STEM.Technology'
+    ])
+    
+    # Format the prompt with the provided description and categories
+    prompt = prompt_template.format(description=description, categories=categories_str)
+    
+    # Use the OpenAI model to generate the classification
+    response = openai(prompt).content
+    
+    # Return the classified category
+    return response.strip()
+
 def download_images(data: pd.DataFrame, images_root_path, filename_out):
     for idx, row in data.iterrows():
         if DEBUG and idx > 10:
@@ -126,6 +278,9 @@ def download_images(data: pd.DataFrame, images_root_path, filename_out):
         image_url = row['image_url']
         language, title = get_wikipedia_language_and_title_from_url(row["page_url"])
         categories=get_wikipedia_categories(language, title)
+        
+        categories = filter_semantic_categories(categories)
+        
         # select random category
         random_category = random.sample(categories, min(1, len(categories)))
         
@@ -135,10 +290,18 @@ def download_images(data: pd.DataFrame, images_root_path, filename_out):
         # select five random categories
         five_random_categories = random.sample(categories, min(5, len(categories)))
         
-        data.at[idx, 'categories'] = categories
-        data.at[idx, 'random_category'] = random_category
-        data.at[idx, 'two_random_categories'] = two_random_categories
-        data.at[idx, 'five_random_categories'] = five_random_categories
+        row['categories'] = categories
+        row['random_category'] = random_category
+        row['two_random_categories'] = two_random_categories
+        row['five_random_categories'] = five_random_categories
+        
+        classification = classify_wikipedia_description(row['context_page_description'])
+        row["overcategory"] = classification
+        row["wikidata_id"] = get_wikidata_id(language, title)
+        
+        
+        
+        print(row)
         
         
         try:
@@ -179,6 +342,7 @@ def retry_download_image(image_url, image_path) -> bool:
             urllib.request.urlretrieve(image_url, image_path)
             return True
         except Exception as e:
+            print(e)
             logger.debug(f'Error downloading image: {image_path} from {image_url} - retrying {i + 1}')
             time.sleep(0.5+i)
     return False
