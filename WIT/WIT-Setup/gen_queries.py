@@ -69,7 +69,8 @@ The output should be in json format with no additional commentary:
     "language_in_metadata": false, 
     "references_content": false,
     "references_individual": false
-    }}
+    }},
+    ...
 ]
     """
 
