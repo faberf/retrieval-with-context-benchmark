@@ -1,0 +1,74 @@
+{
+  "schemas": {
+    "baseline": {
+      "connection": {
+        "database": "PgVectorConnectionProvider",
+        "parameters": {
+          "host": "10.34.64.130",
+          "port": "5432",
+          "username": "postgres",
+          "password": "admin"
+        }
+      },
+      "fields": {
+        "averagecolor": {
+          "factory": "AverageColor"
+        },
+        "file": {
+          "factory": "FileSourceMetadata"
+        },
+        "time": {
+          "factory": "TemporalMetadata"
+        },
+        "video": {
+          "factory": "VideoSourceMetadata"
+        },
+        "clip": {
+          "factory": "DenseEmbedding",
+          "parameters": {
+            "host": "http://10.34.64.84:8888/",
+            "model": "open-clip-vit-b32",
+            "length": "512",
+            "timeoutSeconds": "100",
+            "retries": "1000"
+          }
+        },
+        "documentType": {
+          "factory": "ImageClassification",
+          "parameters": {
+            "host": "http://10.34.64.84:8888/",
+            "model": "open-clip-vit-b32",
+            "timeoutSeconds": "100",
+            "retries": "1000",
+            "classes": "text document,photograph",
+            "threshold": "0.1",
+            "top_k": "1"
+          }
+        }
+      },
+      "resolvers": {
+        "disk": {
+          "factory": "DiskResolver",
+          "parameters": {
+            "location": "../thumbnails"
+          }
+        }
+      },
+      "exporters": {
+        "thumbnail": {
+          "factory": "ThumbnailExporter",
+          "resolverName": "disk",
+          "parameters": {
+            "maxSideResolution": "400",
+            "mimeType": "JPG"
+          }
+        }
+      },
+      "extractionPipelines": {
+        "wit1": {
+          "path": "./wit_baseline.json"
+        }
+      }
+    }
+  }
+}
