@@ -6,10 +6,14 @@ import requests
 from abc import ABC, abstractmethod
 
 
+import time
+
 class Retriever(ABC):
-    def __init__(self, schema_name, host):
+    def __init__(self, schema_name, host, max_retries=1000, retry_delay=2):
         self.schema_name = schema_name
         self.host = host
+        self.max_retries = max_retries  # Maximum number of retries
+        self.retry_delay = retry_delay  # Delay between retries in seconds
 
     @abstractmethod
     def make_payload(self, input_text):
@@ -19,25 +23,37 @@ class Retriever(ABC):
         url = f"{self.host}/api/{self.schema_name}/query"
         payload = self.make_payload(input_text)
         headers = {'Content-Type': 'application/json'}
+        retries = 0
 
-        try:
-            response = requests.post(url, data=json.dumps(payload), headers=headers)
-            response.raise_for_status()
-            response_data = response.json()
+        while retries < self.max_retries:
+            try:
+                response = requests.post(url, data=json.dumps(payload), headers=headers)
+                response.raise_for_status()
+                response_data = response.json()
 
-            filenames = []
-            if "retrievables" in response_data:
-                for item in response_data["retrievables"]:
-                    path = item["properties"].get("path", "")
-                    if path:
-                        base_name = os.path.basename(path)
-                        file_name, _ = os.path.splitext(base_name)
-                        filenames.append(file_name)
-            return filenames  # Return all filenames to ensure ranks are available
+                filenames = []
+                if "retrievables" in response_data:
+                    for item in response_data["retrievables"]:
+                        path = item["properties"].get("path", "")
+                        if path:
+                            base_name = os.path.basename(path)
+                            file_name, _ = os.path.splitext(base_name)
+                            filenames.append(file_name)
+                
+                if filenames:  # If results are not empty, return the filenames
+                    return filenames
+                else:
+                    print(f"Empty result from API, retrying... ({retries + 1}/{self.max_retries})")
+                    retries += 1
+                    time.sleep(self.retry_delay)  # Wait before retrying
+            except requests.exceptions.RequestException as e:
+                print(f"Error: {e}")
+                retries += 1
+                time.sleep(self.retry_delay)  # Wait before retrying
 
-        except requests.exceptions.RequestException as e:
-            print(f"Error: {e}")
-            return []
+        print(f"Failed to retrieve results after {self.max_retries} attempts.")
+        return []
+
 
 
 # ClipRetriever uses baseline schema
