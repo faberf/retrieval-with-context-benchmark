@@ -85,23 +85,48 @@ The output should be in json format with no additional commentary:
     # Get the response from the chat model
     response = chat([human_message])
     
-    return json.loads(response.content)
+    try:
+    
+        return json.loads(response.content)
+    except Exception as e:
+        print(f"Error parsing response: {e}")
+        return generate_queries_via_langchain(metadata, image_data_url)
 
 import uuid
 
-# Function to process images in a directory and generate queries
-def process_images(directory, output_file):
+def process_images(directory, output_file, checkpoint_file="processed_images.json"):
     image_files = glob.glob(os.path.join(directory, "*.*"))
-    all_queries = []
+
+    # Load progress from checkpoint if it exists
+    if os.path.exists(checkpoint_file):
+        with open(checkpoint_file, 'r', encoding='utf-8') as f:
+            processed_images = set(json.load(f))
+    else:
+        processed_images = set()
+
+    # Open the output file and check its current state
+    if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
+        # If the file doesn't exist or is empty, write the opening bracket
+        with open(output_file, 'w', encoding='utf-8') as f:
+            f.write('[\n')
+        needs_comma = False
+    else:
+        # If the file exists and has content, prepare to append
+        needs_comma = True
 
     for image_path in image_files:
+        # Skip already processed images
+        if image_path in processed_images:
+            print(f"Skipping already processed image: {image_path}")
+            continue
+        
         print(f"Processing {image_path}...")
         
         # Extract EXIF user comment
         exif_comment = extract_exif(image_path)
         
         # If there's no EXIF user comment, skip the image
-        if exif_comment is None:
+        if (exif_comment is None) or (not exif_comment.strip()):
             print(f"No EXIF user comment found for {image_path}. Skipping...")
             continue
         
@@ -111,19 +136,32 @@ def process_images(directory, output_file):
         # Generate queries using LangChain and ChatGPT-4
         queries = generate_queries_via_langchain(exif_comment, image_data_url)
         
-        image_url = json.loads(exif_comment)["image_url"]
-        for query in queries:
-            query["image_url"] = image_url
-            query["image_id"] = str(uuid.uuid3(uuid.NAMESPACE_DNS, image_url))
+        try:
+            image_url = json.loads(exif_comment).get("image_url", "")
+        except Exception as e: 
+            continue
+        if image_url:
+            for query in queries:
+                query["image_url"] = image_url
+                query["image_id"] = str(uuid.uuid3(uuid.NAMESPACE_DNS, image_url))
         
-        # Append the queries to the list
-        all_queries.extend(queries)
+            # Append the queries to the file
+            with open(output_file, 'a', encoding='utf-8') as f:
+                if needs_comma:
+                    f.write(',\n')  # Add a comma before the next JSON object if needed
+                f.write(",\n".join(json.dumps(q, ensure_ascii=False, indent=4) for q in queries))
+                needs_comma = True  # Ensure subsequent entries are comma-separated
+        
+        # Mark this image as processed and save checkpoint
+        processed_images.add(image_path)
+        with open(checkpoint_file, 'w', encoding='utf-8') as f:
+            json.dump(list(processed_images), f, ensure_ascii=False, indent=4)
     
-    # Save all queries to a JSON file
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(all_queries, f, ensure_ascii=False, indent=4)
+    # After all images are processed, close the JSON array properly
+    with open(output_file, 'a', encoding='utf-8') as f:
+        f.write('\n]')  # Close the JSON array
 
-    print(f"All queries have been saved to {output_file}")
+    print(f"Progress saved. All queries have been saved to {output_file}")
 
 # Specify the directory containing the images and output file name
 image_directory = "../../benchmark/images"

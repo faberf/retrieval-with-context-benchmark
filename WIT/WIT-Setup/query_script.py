@@ -85,7 +85,7 @@ class CaptionDenseRetriever(Retriever):
                 "mytext1": {"type": "TEXT", "data": input_text}
             },
             "operations": {
-                "captionDense1": {"type": "RETRIEVER", "field": "captionDense", "input": "mytext1"},
+                "captionDense1": {"type": "RETRIEVER", "field": "captiondense", "input": "mytext1"},
                 "filelookup": {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "captionDense1"}
             },
             "context": {
@@ -97,6 +97,40 @@ class CaptionDenseRetriever(Retriever):
             "output": "filelookup"
         }
 
+class ClipDenseCaptionFusionRetriever(Retriever):
+    
+    def __init__(self, schema_name, host, clip_weight=0.5, caption_dense_weight=0.5, max_retries=1000, retry_delay=2):
+        assert clip_weight + caption_dense_weight == 1.0, "Weights should sum to 1.0"
+        self.clip_weight = clip_weight
+        self.caption_dense_weight = caption_dense_weight
+        
+        super().__init__(schema_name, host, max_retries, retry_delay)
+    
+    def make_payload(self, input_text):
+        ret = {
+            "inputs": {
+                "query": {"type": "TEXT", "data": input_text}
+            },
+            "operations": {
+                "feature1": {"type": "RETRIEVER",	"field": "clip", "input": "query"},
+                "feature2": {"type": "RETRIEVER",	"field": "captiondense", "input": "query"},
+                "score" : {"type": "AGGREGATOR", "aggregatorName": "WeightedScoreFusion", "inputs": ["feature1", "feature2"]},
+                "aggregator" : {"type": "TRANSFORMER", "transformerName": "ScoreAggregator",  "input": "score"},
+                "filelookup" : {"type": "TRANSFORMER", "transformerName": "FieldLookup", "input": "aggregator"}
+                },
+                "context": {
+                    "global": {
+                        "limit": "1000"
+                    },
+                    "local" : {		
+                        "filelookup": {"field": "file", "keys": "path"},
+                        "score": {"weights": f"{self.clip_weight},{self.caption_dense_weight}"}
+                    }
+                },
+                "output": "filelookup"
+        }
+        print(ret)
+        return ret
 
 # Load checkpoint file if it exists
 def load_checkpoint(checkpoint_file):
@@ -113,26 +147,14 @@ def save_checkpoint(processed_items, checkpoint_file):
 
 
 # Function to augment each item with retrieval results
-def augment_item(item, clip_retriever, caption_retriever_no_metadata, caption_retriever_with_metadata):
+def augment_item(item, retrievers):
     image_filename = os.path.splitext(item["image_file_name"])[0]  # Extract the base filename (without extension)
-
-    # Perform the three retrievals, ensuring all results are available
-    clip_top10 = clip_retriever.query_files(item["query"])[:10]  # Limit to top 10 for the final output
-    no_metadata_top10 = caption_retriever_no_metadata.query_files(item["query"])[:10]
-    metadata_top10 = caption_retriever_with_metadata.query_files(item["query"])[:10]
-
-    # Get the rank of the original image file in each retrieval result
-    clip_rank = clip_retriever.query_files(item["query"]).index(image_filename) + 1 if image_filename in clip_retriever.query_files(item["query"]) else None
-    nometadata_rank = caption_retriever_no_metadata.query_files(item["query"]).index(image_filename) + 1 if image_filename in caption_retriever_no_metadata.query_files(item["query"]) else None
-    metadata_rank = caption_retriever_with_metadata.query_files(item["query"]).index(image_filename) + 1 if image_filename in caption_retriever_with_metadata.query_files(item["query"]) else None
-
-    # Augment the item with new fields
-    item["clip_top10"] = clip_top10
-    item["clip_rank"] = clip_rank
-    item["nometadata_top10"] = no_metadata_top10
-    item["nometadata_rank"] = nometadata_rank
-    item["metadata_top10"] = metadata_top10
-    item["metadata_rank"] = metadata_rank
+    
+    for key, retriever in retrievers.items():
+        top10 = retriever.query_files(item["query"])[:10]
+        rank = retriever.query_files(item["query"]).index(image_filename) + 1 if image_filename in retriever.query_files(item["query"]) else None
+        item[f"{key}_top10"] = top10
+        item[f"{key}_rank"] = rank
 
     return item
 
@@ -150,9 +172,12 @@ def process_queries(input_file, output_file, checkpoint_file, batch_size=1):  # 
     queries_to_process = [q for q in queries if q["image_id"] not in processed_queries]
 
     # Initialize retrievers
-    clip_retriever = ClipRetriever(schema_name="baseline", host="http://localhost:7070")
-    caption_retriever_no_metadata = CaptionDenseRetriever(schema_name="no-metadata", host="http://localhost:7070")
-    caption_retriever_with_metadata = CaptionDenseRetriever(schema_name="with-metadata", host="http://localhost:7070")
+    retrievers = {
+        "clip": ClipRetriever(schema_name="baseline", host="http://localhost:7070"),
+        "caption_dense_no_metadata": CaptionDenseRetriever(schema_name="no-metadata", host="http://localhost:7070"),
+        "caption_dense_with_metadata": CaptionDenseRetriever(schema_name="with-metadata", host="http://localhost:7070"),
+        "clip_dense_caption_fusion_50_50_with_metadata": ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host="http://localhost:7070", clip_weight=0.5, caption_dense_weight=0.5)
+    }
 
     # Check if output file exists and handle its initial state
     if os.path.exists(output_file):
@@ -176,7 +201,7 @@ def process_queries(input_file, output_file, checkpoint_file, batch_size=1):  # 
 
         # Augment each query with the retrieval results
         for item in batch:
-            augmented_item = augment_item(item, clip_retriever, caption_retriever_no_metadata, caption_retriever_with_metadata)
+            augmented_item = augment_item(item, retrievers)
             augmented_batch.append(augmented_item)
 
         # Write augmented batch to output file
