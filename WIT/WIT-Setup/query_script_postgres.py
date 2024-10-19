@@ -30,8 +30,8 @@ class Retriever(ABC):
     def __init__(self, schema_name, host, max_retries=1000, retry_delay=2):
         self.schema_name = schema_name
         self.host = host
-        self.max_retries = max_retries  # Maximum number of retries
-        self.retry_delay = retry_delay  # Delay between retries in seconds
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
 
     @abstractmethod
     def make_payload(self, input_text):
@@ -39,17 +39,14 @@ class Retriever(ABC):
     
     @abstractmethod
     def create_table_query(self):
-        """Create the SQL query to ensure the retriever's table exists."""
         pass
     
     @abstractmethod
     def check_existing_result(self, query_id):
-        """Check if a retriever has already processed a query."""
         pass
     
     @abstractmethod
-    def add_result_to_db(self, query_id, rank, top10, image_filename):
-        """Insert or update results in the database."""
+    def add_result_to_db(self, query_id, ranking):
         pass
 
     def query_files(self, input_text):
@@ -73,16 +70,16 @@ class Retriever(ABC):
                             file_name, _ = os.path.splitext(base_name)
                             filenames.append(file_name)
                 
-                if filenames:  # If results are not empty, return the filenames
+                if filenames:
                     return filenames
                 else:
                     print(f"Empty result from API, retrying... ({retries + 1}/{self.max_retries})")
                     retries += 1
-                    time.sleep(self.retry_delay)  # Wait before retrying
+                    time.sleep(self.retry_delay)
             except requests.exceptions.RequestException as e:
                 print(f"Error: {e}")
                 retries += 1
-                time.sleep(self.retry_delay)  # Wait before retrying
+                time.sleep(self.retry_delay)
 
         print(f"Failed to retrieve results after {self.max_retries} attempts.")
         return []
@@ -112,8 +109,7 @@ class ClipRetriever(Retriever):
         return f"""
         CREATE TABLE IF NOT EXISTS image_query_schema.{table_name} (
             query_id INT REFERENCES image_query_schema.query(query_id),
-            rank INT,
-            top_10 TEXT[],
+            ranking TEXT[],
             retrieval_schema TEXT NOT NULL,
             UNIQUE (query_id, retrieval_schema)
         );
@@ -124,14 +120,14 @@ class ClipRetriever(Retriever):
         cur.execute(f"SELECT query_id FROM image_query_schema.{table_name} WHERE query_id = %s AND retrieval_schema = %s", (query_id, self.schema_name))
         return cur.fetchone() is not None
 
-    def add_result_to_db(self, query_id, rank, top10, image_filename):
+    def add_result_to_db(self, query_id, ranking):
         table_name = "clip_results"
         cur.execute(f"""
-            INSERT INTO image_query_schema.{table_name} (query_id, rank, top_10, retrieval_schema)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO image_query_schema.{table_name} (query_id, ranking, retrieval_schema)
+            VALUES (%s, %s, %s)
             ON CONFLICT (query_id, retrieval_schema) DO UPDATE 
-            SET rank = EXCLUDED.rank, top_10 = EXCLUDED.top_10;
-        """, (query_id, rank, top10, self.schema_name))
+            SET ranking = EXCLUDED.ranking;
+        """, (query_id, ranking, self.schema_name))
 
 # CaptionDenseRetriever class
 class CaptionDenseRetriever(Retriever):
@@ -158,8 +154,7 @@ class CaptionDenseRetriever(Retriever):
         return f"""
         CREATE TABLE IF NOT EXISTS image_query_schema.{table_name} (
             query_id INT REFERENCES image_query_schema.query(query_id),
-            rank INT,
-            top_10 TEXT[],
+            ranking TEXT[],
             retrieval_schema TEXT NOT NULL,
             UNIQUE (query_id, retrieval_schema)
         );
@@ -170,14 +165,14 @@ class CaptionDenseRetriever(Retriever):
         cur.execute(f"SELECT query_id FROM image_query_schema.{table_name} WHERE query_id = %s AND retrieval_schema = %s", (query_id, self.schema_name))
         return cur.fetchone() is not None
 
-    def add_result_to_db(self, query_id, rank, top10, image_filename):
+    def add_result_to_db(self, query_id, ranking):
         table_name = "caption_dense_results"
         cur.execute(f"""
-            INSERT INTO image_query_schema.{table_name} (query_id, rank, top_10, retrieval_schema)
-            VALUES (%s, %s, %s, %s)
+            INSERT INTO image_query_schema.{table_name} (query_id, ranking, retrieval_schema)
+            VALUES (%s, %s, %s)
             ON CONFLICT (query_id, retrieval_schema) DO UPDATE 
-            SET rank = EXCLUDED.rank, top_10 = EXCLUDED.top_10;
-        """, (query_id, rank, top10, self.schema_name))
+            SET ranking = EXCLUDED.ranking;
+        """, (query_id, ranking, self.schema_name))
 
 # ClipDenseCaptionFusionRetriever class
 class ClipDenseCaptionFusionRetriever(Retriever):
@@ -218,8 +213,7 @@ class ClipDenseCaptionFusionRetriever(Retriever):
         return f"""
         CREATE TABLE IF NOT EXISTS image_query_schema.{table_name} (
             query_id INT REFERENCES image_query_schema.query(query_id),
-            rank INT,
-            top_10 TEXT[],
+            ranking TEXT[],
             clip_weight FLOAT NOT NULL,
             caption_dense_weight FLOAT NOT NULL,
             p FLOAT NOT NULL,
@@ -237,14 +231,14 @@ class ClipDenseCaptionFusionRetriever(Retriever):
         """, (query_id, self.schema_name, self.clip_weight, self.caption_dense_weight, self.p))
         return cur.fetchone() is not None
 
-    def add_result_to_db(self, query_id, rank, top10, image_filename):
+    def add_result_to_db(self, query_id, ranking):
         table_name = "clip_dense_caption_fusion_results"
         cur.execute(f"""
-            INSERT INTO image_query_schema.{table_name} (query_id, rank, top_10, clip_weight, caption_dense_weight, p, retrieval_schema)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            INSERT INTO image_query_schema.{table_name} (query_id, ranking, clip_weight, caption_dense_weight, p, retrieval_schema)
+            VALUES (%s, %s, %s, %s, %s, %s)
             ON CONFLICT (query_id, clip_weight, caption_dense_weight, p, retrieval_schema) DO UPDATE 
-            SET rank = EXCLUDED.rank, top_10 = EXCLUDED.top_10;
-        """, (query_id, rank, top10, self.clip_weight, self.caption_dense_weight, self.p, self.schema_name))
+            SET ranking = EXCLUDED.ranking;
+        """, (query_id, ranking, self.clip_weight, self.caption_dense_weight, self.p, self.schema_name))
 
 # Function to create tables if they don't exist for each retriever
 def create_retriever_tables(retrievers):
@@ -267,11 +261,10 @@ def augment_item_db(item, retrievers):
 
     for retriever in retrievers:
         results = retriever.query_files(item["query"])
-        top10 = results[:10]
-        rank = results.index(image_filename) + 1 if image_filename in results else None
+        ranking = results  # Store all results
 
         # Call retriever-specific method to add results to the database
-        retriever.add_result_to_db(item["query_id"], rank, top10, image_filename)
+        retriever.add_result_to_db(item["query_id"], ranking)
 
     return item
 
@@ -283,9 +276,15 @@ def process_queries_db():
         ClipRetriever(schema_name="baseline", host=host),
         CaptionDenseRetriever(schema_name="no-metadata", host=host),
         CaptionDenseRetriever(schema_name="with-metadata", host=host),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.9, caption_dense_weight=0.1),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.8, caption_dense_weight=0.2),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.6, caption_dense_weight=0.4),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5),
-        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5, p=math.inf),
-        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5, p=10.0)
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.4, caption_dense_weight=0.6),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.3, caption_dense_weight=0.7),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.2, caption_dense_weight=0.8),
+        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.1, caption_dense_weight=0.9)
     ]
 
     # Ensure tables exist
@@ -295,7 +294,7 @@ def process_queries_db():
     cur.execute("""
         SELECT q.query_id, q.query_text, i.image_file_name
         FROM image_query_schema.query q
-        JOIN image_query_schema.image i ON q.image_id = i.image_id;
+        JOIN image_query_schema.image i ON q.original_image_id = i.image_id;
     """)
     queries = cur.fetchall()
 
