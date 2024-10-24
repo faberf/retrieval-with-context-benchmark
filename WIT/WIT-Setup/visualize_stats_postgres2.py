@@ -41,12 +41,16 @@ import math
 
 # Base Retriever class using abc
 class Retriever(ABC):
-    def __init__(self, schema_name, host, max_retries=1000, retry_delay=2, retrieval_limit=1000):
+    def __init__(self, schema_name, host, method_name, max_retries=1000, retry_delay=2, retrieval_limit=1000):
         self.schema_name = schema_name
         self.host = host
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.retrieval_limit = retrieval_limit
+        self.method_name = method_name
+    
+    def get_method_name(self):
+        return self.method_name
 
     @abstractmethod
     def make_payload(self, input_text):
@@ -100,10 +104,6 @@ class Retriever(ABC):
         return []
 
     @abstractmethod
-    def get_method_name(self):
-        pass
-
-    @abstractmethod
     def get_table_name(self):
         pass
 
@@ -117,6 +117,14 @@ class Retriever(ABC):
 
 # ClipRetriever class
 class ClipRetriever(Retriever):
+    
+    def __init__(self, schema_name, host, max_retries=1000, retry_delay=2, retrieval_limit=1000, method_name=None):
+        if method_name is not None:
+            method_name = method_name
+        else:
+            method_name = f"CLIP ({schema_name})"
+        super().__init__(schema_name, host, method_name, max_retries, retry_delay, retrieval_limit)
+    
     def make_payload(self, input_text):
         return {
             "inputs": {
@@ -160,9 +168,6 @@ class ClipRetriever(Retriever):
             SET ranking = EXCLUDED.ranking;
         """, (query_id, ranking, self.schema_name))
 
-    def get_method_name(self):
-        return f"CLIP ({self.schema_name})"
-
     def get_table_name(self):
         return "clip_results"
 
@@ -193,22 +198,20 @@ class ClipRetriever(Retriever):
             if image_id in ranking:
                 rank = ranking.index(image_id) + 1
             else:
-                rank = None
+                rank = math.inf
             ranks_by_query[query_id].append(rank)
 
         # Collect and sort ranks per query
-        all_ranks = []
-        for query_id in sorted(ranks_by_query.keys()):
-            ranks = ranks_by_query[query_id]
-            # Sort ranks from best to worst, placing None at the end
-            sorted_ranks = sorted(
-                ranks, key=lambda x: (x is None, x)
-            )
-            all_ranks.append(sorted_ranks)
-
-        return all_ranks
+        return {query_id: sorted(ranks) for query_id, ranks in ranks_by_query.items()}
     
 class CaptionDenseRetriever(Retriever):
+    def __init__(self, schema_name, host, max_retries=1000, retry_delay=2, retrieval_limit=1000, method_name=None):
+        if method_name is not None:
+            method_name = method_name
+        else:
+            method_name = f"CaptionDense ({schema_name})"
+        super().__init__(schema_name, host, method_name, max_retries, retry_delay, retrieval_limit)
+    
     def make_payload(self, input_text):
         return {
             "inputs": {
@@ -252,9 +255,6 @@ class CaptionDenseRetriever(Retriever):
             SET ranking = EXCLUDED.ranking;
         """, (query_id, ranking, self.schema_name))
 
-    def get_method_name(self):
-        return f"CaptionDense ({self.schema_name})"
-
     def get_table_name(self):
         return "caption_dense_results"
 
@@ -285,30 +285,26 @@ class CaptionDenseRetriever(Retriever):
             if image_id in ranking:
                 rank = ranking.index(image_id) + 1
             else:
-                rank = None
+                rank = math.inf
             ranks_by_query[query_id].append(rank)
 
         # Collect and sort ranks per query
-        all_ranks = []
-        for query_id in sorted(ranks_by_query.keys()):
-            ranks = ranks_by_query[query_id]
-            # Sort ranks from best (smallest) to worst (largest), placing None at the end
-            sorted_ranks = sorted(
-                ranks, key=lambda x: (x is None, x)
-            )
-            all_ranks.append(sorted_ranks)
-
-        return all_ranks
+        return {query_id: sorted(ranks) for query_id, ranks in ranks_by_query.items()}
 
 
 # ClipDenseCaptionFusionRetriever class
 class ClipDenseCaptionFusionRetriever(Retriever):
-    def __init__(self, schema_name, host, clip_weight=0.5, caption_dense_weight=0.5, p=1.0, max_retries=1000, retry_delay=2, retrieval_limit=1000):
+    def __init__(self, schema_name, host, clip_weight=0.5, caption_dense_weight=0.5, p=1.0, max_retries=1000, retry_delay=2, retrieval_limit=1000, method_name=None):
         assert clip_weight + caption_dense_weight == 1.0, "Weights should sum to 1.0"
         self.clip_weight = clip_weight
         self.caption_dense_weight = caption_dense_weight
         self.p = p
-        super().__init__(schema_name, host, max_retries, retry_delay, retrieval_limit)
+        if method_name is not None:
+            method_name = method_name
+        else:
+            method_name = f"Fusion ({schema_name}, weights={clip_weight}/{caption_dense_weight}, p={p})"
+        
+        super().__init__(schema_name, host, method_name, max_retries, retry_delay, retrieval_limit)
 
     def make_payload(self, input_text):
         p_str = "Infinity" if math.isinf(self.p) else str(self.p)
@@ -367,9 +363,6 @@ class ClipDenseCaptionFusionRetriever(Retriever):
             SET ranking = EXCLUDED.ranking;
         """, (query_id, ranking, self.clip_weight, self.caption_dense_weight, self.p, self.schema_name))
 
-    def get_method_name(self):
-        return f"Fusion ({self.schema_name}, weights={self.clip_weight}/{self.caption_dense_weight}, p={self.p})"
-
     def get_table_name(self):
         return "clip_dense_caption_fusion_results"
 
@@ -401,23 +394,17 @@ class ClipDenseCaptionFusionRetriever(Retriever):
                 if image_id in ranking:
                     rank = ranking.index(image_id) + 1
                 else:
-                    rank = None
+                    rank = math.inf
                 ranks_by_query[query_id].append(rank)
 
             # Collect and sort ranks per query
-            all_ranks = []
-            for query_id in sorted(ranks_by_query.keys()):
-                ranks = ranks_by_query[query_id]
-                # Sort ranks from best to worst, placing None at the end
-                sorted_ranks = sorted(
-                    ranks, key=lambda x: (x is None, x)
-                )
-                all_ranks.append(sorted_ranks)
+            return {query_id: sorted(ranks) for query_id, ranks in ranks_by_query.items()}
 
-            return all_ranks
-
+from joblib import Memory
+memory = Memory("cachedir")
 
 # Function to load queries from the PostgreSQL database
+@memory.cache
 def load_queries(retrievers):
     # Query to fetch data from the query and image tables, and all related image IDs
     sql = """
@@ -425,11 +412,11 @@ def load_queries(retrievers):
         q.goes_beyond_metadata_using_image_contents, q.references_individual,
         q.query_language, q.query_language_equals_metadata_language,
         ARRAY_AGG(qi.image_id::text) AS image_ids,  -- Collect all associated image IDs as a list
-        i.metadata_language
+        ARRAY_AGG(i.metadata_language) AS metadata_languages  -- Collect all associated metadata languages as a list
     FROM image_query_schema.query q
     JOIN image_query_schema.query_image qi ON q.query_id = qi.query_id
     JOIN image_query_schema.image i ON qi.image_id = i.image_id
-    GROUP BY q.query_id, i.metadata_language
+    GROUP BY q.query_id
     """
     cur.execute(sql)
     rows = cur.fetchall()
@@ -448,9 +435,10 @@ def load_queries(retrievers):
             'query_language': row[7],
             'query_language_equals_metadata_language': row[8],
             'image_ids': row[9],  # List of UUIDs converted to strings
-            'metadata_language': row[10]
+            'metadata_languages': row[10]
         }
-        queries.append(query)
+        if len(row[9]) > 0:
+            queries.append(query)
 
     # Build a mapping from query_id to query dictionary for easy lookup
     query_dict = {q['query_id']: q for q in queries}
@@ -458,13 +446,17 @@ def load_queries(retrievers):
     for retriever in retrievers:
         results = retriever.get_results(cur)
         rank_key = retriever.get_rank_key()
-        for query_id, rank_list in enumerate(results):
+        for query_id, rank_list in results.items():
             # Get the corresponding query dictionary
-            if query_id + 1 in query_dict:  # query_id is now 1-based in this iteration
-                query = query_dict[query_id + 1]
-                query[rank_key] = rank_list  # Directly assign the rank list
+            if query_id in query_dict:  
+                query_dict[query_id][rank_key] = rank_list
 
-    return list(query_dict.values())
+    method_keys = [retriever.get_rank_key() for retriever in retrievers]
+    
+    return [
+        query for query in query_dict.values()
+        if all(query.get(rank_key) and len(query[rank_key]) == len(query.get(rank_key)) for rank_key in method_keys)
+    ]
 
 
 
@@ -516,6 +508,39 @@ from collections import Counter
 import numpy as np
 import pandas as pd
 
+
+def ndcg(ranked_list):
+    """
+    Calculate the Normalized Discounted Cumulative Gain (NDCG) for a given ranked list,
+    considering all ranks (k set to infinity).
+    
+    Parameters:
+    ranked_list (list of int): A list of ranks (1-based index) where each rank has relevance of 1.
+    
+    Returns:
+    float: The NDCG value.
+    """
+    # Number of relevant items
+    num_relevant = len(ranked_list)
+    
+    if num_relevant == 0:
+        return 0.0  # No relevant items, NDCG is zero
+    
+    # Compute DCG for the actual ranking
+    dcg = 0.0
+    for rank in ranked_list:
+        dcg += 1 / np.log2(rank + 1)
+    
+    # Compute Ideal DCG (IDCG) where all relevant items are ranked at the top positions
+    idcg = 0.0
+    for i in range(1, num_relevant + 1):
+        idcg += 1 / np.log2(i + 1)
+    
+    # Calculate NDCG
+    ndcg_value = dcg / idcg
+    
+    return ndcg_value
+
 # Function to compute stats and prepare data for plotting
 def compute_stats(queries, image_ids, retrievers):
     stats = {}
@@ -524,16 +549,7 @@ def compute_stats(queries, image_ids, retrievers):
     method_keys = [retriever.get_rank_key() for retriever in retrievers]
     method_names = [retriever.get_method_name() for retriever in retrievers]
     
-    # Filter queries to include those with ranks from all methods
-    filtered_queries = [
-        query for query in queries
-        if all(query.get(rank_key) and len(query[rank_key]) > 0 for rank_key in method_keys)
-    ]
-    
-    print(f"Total queries with ranks from all methods: {len(filtered_queries)}")
-    
-    # Use filtered_queries for stats computation
-    queries = filtered_queries
+    print(f"Total queries with ranks from all methods: {len(queries)}")
     
     # Queries per image
     image_query_count = Counter()
@@ -545,6 +561,8 @@ def compute_stats(queries, image_ids, retrievers):
     for image_id in image_ids:
         if image_id not in image_query_count:
             image_query_count[image_id] = 0
+            
+    
     
     # Count metadata flags
     flag_counts = {
@@ -560,22 +578,26 @@ def compute_stats(queries, image_ids, retrievers):
     flag_names = list(flag_counts.keys())
     co_occurrence_matrix = np.zeros((len(flag_names), len(flag_names)))
     
-    # Initialize language confusion matrix
-    language_confusion = pd.crosstab(
-        [q['query_language'] for q in queries], 
-        [q['metadata_language'] for q in queries]
-    )
+    # # Initialize language confusion matrix
+    # language_confusion = pd.crosstab(
+    #     [q['query_language'] for q in queries], 
+    #     [q['metadata_languages'] for q in queries]
+    # )
     
-    # Get top 20 languages
-    top_languages = language_confusion.sum().nlargest(20).index.tolist()
-    
-    # Collapse non-top languages into "Other"
-    collapsed_query_languages = [collapse_language(q['query_language'], top_languages) for q in queries]
-    collapsed_metadata_languages = [collapse_language(q['metadata_language'], top_languages) for q in queries]
-    language_confusion_collapsed = pd.crosstab(collapsed_query_languages, collapsed_metadata_languages)
-    
-    # Collect reciprocal ranks
-    method_reciprocal_ranks = {method_name: [] for method_name in method_names}
+    # # Get top 20 languages
+    # top_languages = language_confusion.sum().nlargest(20).index.tolist()
+
+    # # Collapse non-top languages into "Other"
+    # collapsed_query_languages = [collapse_language(q['query_language'], top_languages) for q in queries]
+    # collapsed_metadata_languages = [collapse_language(q['metadata_language'], top_languages) for q in queries]
+
+    # # Generate confusion matrix
+    # language_confusion_collapsed = pd.crosstab(collapsed_query_languages, collapsed_metadata_languages)
+
+    # # Ensure both axes have the same categories
+    # language_confusion_collapsed = language_confusion_collapsed.reindex(index=top_languages + ['Other'], columns=top_languages + ['Other'], fill_value=0)
+    # # Collect reciprocal ranks
+    # # method_reciprocal_ranks = {method_name: [] for method_name in method_names}
     
     for query in queries:
         flags = [query.get(flag, False) for flag in flag_counts]
@@ -591,408 +613,755 @@ def compute_stats(queries, image_ids, retrievers):
                     if i != j:
                         co_occurrence_matrix[j, i] += 1  # Ensure symmetry
     
-        # Calculate reciprocal ranks and collect them
-        for rank_key, method_name in zip(method_keys, method_names):
-            ranks = query.get(rank_key)
-            if ranks and len(ranks) > 0:
-                worst_rank = ranks[-1]  # Worst case rank (highest number)
-                method_reciprocal_ranks[method_name].append(1.0 / worst_rank)
-            else:
-                method_reciprocal_ranks[method_name].append(0.0)
-    
     # Store all stats
     stats['image_query_count'] = image_query_count
     stats['flag_counts'] = flag_counts
     stats['co_occurrence_matrix'] = co_occurrence_matrix
     stats['flag_names'] = flag_names
-    stats['language_confusion_collapsed'] = language_confusion_collapsed
-    stats['method_reciprocal_ranks'] = method_reciprocal_ranks
+    # stats['language_confusion_collapsed'] = language_confusion_collapsed
     
     # Prepare DataFrame with ranks and flags
     data_list = []
-    flags_list = list(flag_counts.keys())
+    
+    data_list_no_ranks = []
     
     # Map original flags to readable labels
-    flag_labels = {
+    positive_flag_labels = {
         'historic_period': 'References a Historic Period',
         'location': 'References a Location',
         'traditional_customs_practices': 'References Customs or Practices',
-        'query_language_equals_metadata_language': 'Query Lang Equals Metadata',
-        'goes_beyond_metadata_using_image_contents': 'Goes Beyond Metadata',
+        # 'query_language_equals_metadata_language': 'Unilingual',
+        'goes_beyond_metadata_using_image_contents': 'Content Queries',
         'references_individual': 'References an Individual',
     }
     
+    negative_flag_labels = {
+        'historic_period': 'Does not Reference a Historic Period',
+        'location': 'Does not Reference a Location',
+        'traditional_customs_practices': 'Does not Reference Customs or Practices',
+        # 'query_language_equals_metadata_language': 'Cross-Lingual',
+        'goes_beyond_metadata_using_image_contents': 'Metadata Queries',
+        'references_individual': 'Does not Reference an Individual',
+    }
+    
+    query_language_counter = Counter([q['query_language'] for q in queries])
+    top_5_query_languages = next(zip(*query_language_counter.most_common(5)))
+    top_20_query_languages = next(zip(*query_language_counter.most_common(20)))
+    
     for query in queries:
         # Ensure flags are booleans
-        flags = {flag_labels[flag]: bool(query.get(flag, False)) for flag in flags_list}
+        flags = {positive_flag_labels[flag]: bool(query.get(flag, False)) for flag in positive_flag_labels}
+        flags.update({negative_flag_labels[flag]: not bool(query.get(flag, False)) for flag in negative_flag_labels})
         query_id = query['query_id']
+        
+        flags["query_language"] = query['query_language']
+        flags["query_language_top5"] = query['query_language'] if query['query_language'] in top_5_query_languages else 'Other'
+        flags["query_language_top20"] = query['query_language'] if query['query_language'] in top_20_query_languages else 'Other'
+        
+        metadata_language_counter = Counter(query['metadata_languages'])
+        most_common_metadata_language, most_common_metadata_language_count = metadata_language_counter.most_common(1)[0]
+        most_common_metadata_language_frequency = most_common_metadata_language_count / len(query['metadata_languages'])
+        CUTOFF = 2/3.0
+        if most_common_metadata_language_frequency >= CUTOFF:
+            flags['most_common_metadata_language'] = most_common_metadata_language
+            flags['most_common_metadata_language_top5'] = most_common_metadata_language if most_common_metadata_language in top_5_query_languages else 'Other'
+            flags['most_common_metadata_language_top20'] = most_common_metadata_language if most_common_metadata_language in top_20_query_languages else 'Other'
+        else:
+            flags['most_common_metadata_language'] = 'Mixed'
+            flags["most_common_metadata_language_top5"] = 'Mixed'
+            flags["most_common_metadata_language_top20"] = 'Mixed'
+        
+        if flags['most_common_metadata_language'] == query['query_language']:
+            flags["Unilingual"] = True
+            flags["Cross-Lingual"] = False
+        else:
+            flags["Unilingual"] = False
+            flags["Cross-Lingual"] = True
+        
+        data_list_no_ranks.append({"query_id": query_id, **flags})
+        
     
         # For each method, collect rank and flags
         for rank_key, method_name in zip(method_keys, method_names):
             ranks = query.get(rank_key)
             if ranks and len(ranks) > 0:
-                worst_rank = ranks[-1]  # Worst case rank (highest number)
-                if worst_rank > 0:
-                    data = {
-                        'method': method_name,
-                        'rank': worst_rank,
-                        'query_id': query_id
-                    }
-                    data.update(flags)
-                    data_list.append(data)
+                ndcg_value = ndcg(ranks)
+                data = {
+                    'method': method_name,
+                    'worst_rank': ranks[-1],
+                    "best_rank": ranks[0],
+                    'ndcg': ndcg_value,
+                    'query_id': query_id
+                }
+                data.update(flags)
+                data_list.append(data)
+                
     
     # Convert to DataFrame
     mrr_df = pd.DataFrame(data_list)
     
-    # Get top 5 metadata languages
-    metadata_language_counts = pd.Series([q['metadata_language'] for q in queries]).value_counts()
-    top_5_metadata_languages = metadata_language_counts.nlargest(5).index.tolist()
+    base_df = pd.DataFrame(data_list_no_ranks)
+    mrr_df['method'] = pd.Categorical(mrr_df['method'], categories=method_names, ordered=True)
     
-    # Function to map languages to top 5 or 'Other'
-    def map_language(lang):
-        return lang if lang in top_5_metadata_languages else 'Other'
+    crosstab = pd.crosstab(base_df["query_language_top20"], base_df["most_common_metadata_language_top20"])
     
-    # Add language columns to mrr_df
-    mrr_df['metadata_language'] = mrr_df['query_id'].map({q['query_id']: q['metadata_language'] for q in queries})
-    mrr_df['query_language'] = mrr_df['query_id'].map({q['query_id']: q['query_language'] for q in queries})
-    mrr_df['language_group'] = mrr_df['metadata_language'].apply(map_language)
-    mrr_df['query_lang_equals_metadata_lang'] = mrr_df['query_language'] == mrr_df['metadata_language']
+    #reindex using language counter
+    crosstab = crosstab.reindex(index=top_20_query_languages + ('Other',), columns=top_20_query_languages + ('Other', "Mixed"), fill_value=0)
+    
     
     # Store additional stats
     stats['mrr_df'] = mrr_df
-    stats['flag_labels'] = flag_labels
-    stats['top_5_metadata_languages'] = top_5_metadata_languages
-    
-    # Area calculations have been removed as per your request
+    stats['positive_flag_labels'] = positive_flag_labels
+    stats['negative_flag_labels'] = negative_flag_labels
+    stats['top_5_query_languages'] = top_5_query_languages
+    stats['top_20_query_languages'] = top_20_query_languages
+    stats['language_confusion'] = crosstab
+    stats['method_order'] = method_names
     
     return stats
 
 
-def plot_overall_cumulative(stats, queries):
+def plot_overall_cumulative(stats):
     mrr_df = stats['mrr_df']
     total_queries = len(mrr_df['query_id'].unique())
-    cumulative_data = []
+
+    # Plot for worst_rank
+    cumulative_data_worst = []
     for method_name, method_group in mrr_df.groupby("method"):
-        sorted_ranks = np.sort(method_group["rank"])
+        sorted_ranks = np.sort(method_group["worst_rank"])
         cumulative_counts = np.arange(1, len(sorted_ranks) + 1)
-        cumulative_data.extend({
+        cumulative_data_worst.extend({
             "method": method_name,
-            "rank": rank,
+            "worst_rank": rank,
             "cumulative_count": cum_count
         } for rank, cum_count in zip(sorted_ranks, cumulative_counts))
 
-    cumulative_df = pd.DataFrame(cumulative_data)
-    cumulative_df = cumulative_df.groupby(['method', 'rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
-    total_counts = cumulative_df.groupby('method')['cumulative_count'].transform('max')
-    cumulative_df['cumulative_percent'] = (cumulative_df['cumulative_count'] / total_counts) * 100
+    cumulative_df_worst = pd.DataFrame(cumulative_data_worst)
+    cumulative_df_worst = cumulative_df_worst.groupby(['method', 'worst_rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
+    total_counts_worst = cumulative_df_worst.groupby('method')['cumulative_count'].transform('max')
+    cumulative_df_worst['cumulative_percent'] = (cumulative_df_worst['cumulative_count'] / total_counts_worst) * 100
+    
+    cumulative_df_worst["method"] = pd.Categorical(cumulative_df_worst["method"], categories=stats['method_order'], ordered=True)
 
-    # Plotting
+    # Plotting for worst_rank
     plt.figure(figsize=(8, 6))
-    sns.lineplot(data=cumulative_df, x="rank", y="cumulative_percent", hue="method", alpha=0.7, markers=True)
-
+    sns.lineplot(data=cumulative_df_worst, x="worst_rank", y="cumulative_percent", hue="method", alpha=0.7, markers=True)
     plt.xscale("log")
-    plt.xlabel("Rank (log scale)")
+    plt.xlabel("Worst Rank (log scale)")
     plt.ylabel("Cumulative Percentage (\%)")
-    plt.title(f"Cumulative Percentages by Method (All Queries, Total = {total_queries})")
+    plt.title(f"Cumulative Frequencies of Worst Rank by Method ({total_queries} Queries Total)")
     plt.legend(title='Method')
     plt.tight_layout()
     plt.show()
 
-    # Display area data
-    overall_areas = stats['overall_areas']
-    print("\nArea under the curve (log-scaled x-axis) for Overall Cumulative:")
-    for method, area in overall_areas.items():
-        print(f"Method: {method}, Area: {area:.4f}")
+    # Plot for best_rank
+    cumulative_data_best = []
+    for method_name, method_group in mrr_df.groupby("method"):
+        sorted_ranks = np.sort(method_group["best_rank"])
+        cumulative_counts = np.arange(1, len(sorted_ranks) + 1)
+        cumulative_data_best.extend({
+            "method": method_name,
+            "best_rank": rank,
+            "cumulative_count": cum_count
+        } for rank, cum_count in zip(sorted_ranks, cumulative_counts))
 
-    # Bar plot of areas
-    plt.figure(figsize=(6, 4))
-    sns.barplot(x=list(overall_areas.keys()), y=list(overall_areas.values()), palette='pastel')
-    plt.title('Area under the Curve by Method (Overall)')
-    plt.ylabel('Area')
+    cumulative_df_best = pd.DataFrame(cumulative_data_best)
+    cumulative_df_best = cumulative_df_best.groupby(['method', 'best_rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
+    total_counts_best = cumulative_df_best.groupby('method')['cumulative_count'].transform('max')
+    cumulative_df_best['cumulative_percent'] = (cumulative_df_best['cumulative_count'] / total_counts_best) * 100
+    
+    cumulative_df_best["method"] = pd.Categorical(cumulative_df_best["method"], categories=stats['method_order'], ordered=True)
+
+    # Plotting for best_rank
+    plt.figure(figsize=(8, 6))
+    sns.lineplot(data=cumulative_df_best, x="best_rank", y="cumulative_percent", hue="method", alpha=0.7, markers=True)
+    plt.xscale("log")
+    plt.xlabel("Best Rank (log scale)")
+    plt.ylabel("Cumulative Percentage (\%)")
+    plt.title(f"Cumulative Frequencies of Best Rank by Method ({total_queries} Queries Total)")
+    plt.legend(title='Method')
+    plt.tight_layout()
+    plt.show()
+
+    # Plot for ndcg
+    cumulative_data_ndcg = []
+    for method_name, method_group in mrr_df.groupby("method"):
+        # Sort ndcg scores in descending order
+        sorted_ndcg = np.sort(method_group["ndcg"])[::-1]  # Reverse the sorted array
+        cumulative_counts = np.arange(1, len(sorted_ndcg) + 1)
+        cumulative_percentages = (cumulative_counts / len(sorted_ndcg)) * 100
+        cumulative_data_ndcg.extend({
+            "method": method_name,
+            "ndcg": ndcg_score,
+            "cumulative_percent": cum_percent
+        } for ndcg_score, cum_percent in zip(sorted_ndcg, cumulative_percentages))
+
+    cumulative_df_ndcg = pd.DataFrame(cumulative_data_ndcg)
+    
+    cumulative_df_ndcg["method"] = pd.Categorical(cumulative_df_ndcg["method"], categories=stats['method_order'], ordered=True)
+
+    # Plotting for ndcg
+    plt.figure(figsize=(8, 6))
+    sns.lineplot(data=cumulative_df_ndcg, x="ndcg", y="cumulative_percent", hue="method", alpha=0.7, markers=True)
+    plt.gca().invert_xaxis()  # Reverse the x-axis to go from 1 to 0
+    plt.xlabel("nDCG")
+    plt.ylabel("Cumulative Percentage (\%)")
+    plt.title(f"Cumulative Frequencies of nDCG by Method ({total_queries} Queries Total)")
+    plt.legend(title='Method')
+    plt.tight_layout()
+    plt.show()
+
+    plt.figure(figsize=(8, 6))
+    sns.barplot(data=mrr_df, x='method', y='ndcg', ci='sd', capsize=0.2)
+    plt.xlabel("Method")
+    plt.ylabel("Average nDCG")
+    plt.title("Average nDCG by Method")
+    plt.tight_layout()
+    plt.show()
+    
+    method_order = stats['method_order']
+
+    # Compute mean and standard deviation per method
+    stats_ndcg = mrr_df.groupby('method', observed=True)['ndcg'].agg(['mean', 'std']).reset_index()
+
+    # Create the figure and axis
+    plt.figure(figsize=(10, 6))
+    ax = plt.gca()
+
+    # Shifted x-values
+    x_shift = 0.25
+    x_positions = [i + x_shift for i in range(len(method_order))]
+
+    # Plot the violin plot
+    sns.violinplot(
+        data=mrr_df,
+        x='method',
+        y='ndcg',
+        order=method_order,
+        cut=0,
+        inner=None,
+        scale='width',
+        linewidth=1,
+        ax=ax
+    )
+
+    # Modify the violins to display only the right half and apply the x_shift
+    for i, artist in enumerate(ax.collections):
+        paths = artist.get_paths()
+        for path in paths:
+            vertices = path.vertices
+            x_center = np.mean(vertices[:, 0])
+            vertices[:, 0] = np.maximum(vertices[:, 0], x_center)  # Keep only the right half
+            vertices[:, 0] += x_shift  # Apply the x_shift to each violin
+
+    # Add reduced vertical jitter to y-values to prevent overplotting
+    jittered_ndcg = mrr_df['ndcg'] + np.random.uniform(-0.005, 0.005, size=len(mrr_df))
+
+    # Plot the strip plot (raincloud) on the left side with increased horizontal jitter (0.2)
+    strip = sns.stripplot(
+        x=mrr_df['method'],
+        y=jittered_ndcg,
+        order=method_order,
+        color='k',
+        size=3,
+        jitter=0.2,  # Increased jitter to 0.2
+        alpha=0.6,
+        ax=ax
+    )
+
+    # Shift the strip plot to the left side and apply the x_shift
+    for collection in strip.collections:
+        offsets = collection.get_offsets()
+        offsets[:, 0] = offsets[:, 0] - 0.22 + x_shift  # Shift x-values by 0.25
+        collection.set_offsets(offsets)
+
+    # Overlay the mean points with larger error bars, applying the x_shift
+    ax.errorbar(
+        x=[i + x_shift for i in range(len(stats_ndcg))],  # Shift x-values by 0.25
+        y=stats_ndcg['mean'],
+        yerr=stats_ndcg['std'],
+        fmt='o',
+        color='red',
+        capsize=12,      # Increased capsize
+        capthick=2,
+        elinewidth=0,    # Set to zero for cap-only error bars
+        markersize=4,    # Adjusted marker size
+        zorder=10
+    )
+
+    # Set y-axis limits with padding
+    ax.set_ylim(-0.05, 1.05)
+
+    # Shift the x-axis labels (tick labels) by 0.25
+    ax.set_xticks([i + x_shift for i in range(len(method_order))])
+    ax.set_xticklabels(method_order)
+
+    # Labels and title
+    plt.xlabel("Method")
+    plt.ylabel("nDCG")
+    plt.title(f"nDCG Distribution by Method ({total_queries} Queries Total)")
+
+    # Calculate the specific nDCG values
+    ndcg_rank1 = 1.0
+    ndcg_rank2 = 1.0 / np.log2(3)         # Approximately 0.63093
+    ndcg_rank3 = 1.0 / np.log2(4)         # 0.5
+    ndcg_rank10 = 1.0 / np.log2(11)       # Approximately 0.28854
+    ndcg_rank100 = 1.0 / np.log2(101)     # Approximately 0.15056
+
+    # Define the x-range for the horizontal lines
+    x_start = -0.5    # Start at the left edge of the x-axis
+    x_end = -0.3       # Shortened x-range for the horizontal lines
+
+    # Add horizontal lines at the specified nDCG values with limited x-range
+    ax.hlines(y=ndcg_rank1, xmin=x_start, xmax=x_end, color='blue', linestyle='--', linewidth=1)
+    ax.hlines(y=ndcg_rank2, xmin=x_start, xmax=x_end, color='green', linestyle='--', linewidth=1)
+    ax.hlines(y=ndcg_rank3, xmin=x_start, xmax=x_end, color='purple', linestyle='--', linewidth=1)
+    ax.hlines(y=ndcg_rank10, xmin=x_start, xmax=x_end, color='orange', linestyle='--', linewidth=1)
+    ax.hlines(y=ndcg_rank100, xmin=x_start, xmax=x_end, color='brown', linestyle='--', linewidth=1)
+
+    # Adjust x-axis limits to prevent labels from being cut off
+    ax.set_xlim(-0.5, len(method_order) - 0.2 + x_shift)
+
+    # Define label positions and colors
+    label_positions = {
+        ndcg_rank1: {'text': 'Rank 1', 'color': 'blue', 'y_offset': -0.02},
+        ndcg_rank2: {'text': 'Rank 2', 'color': 'green', 'y_offset': 0.01},
+        ndcg_rank3: {'text': 'Rank 3', 'color': 'purple', 'y_offset': 0.01},
+        ndcg_rank10: {'text': 'Rank 10', 'color': 'orange', 'y_offset': 0.01},
+        ndcg_rank100: {'text': 'Rank 100', 'color': 'brown', 'y_offset': 0.01},
+    }
+
+    # Add labels next to the lines, close to the left border
+    for ndcg_value, info in label_positions.items():
+        ax.text(
+            x=x_start + 0.02,  # Slightly to the right of x_start
+            y=ndcg_value + info['y_offset'],
+            s=info['text'],
+            color=info['color'],
+            fontsize=9,
+            ha='left',
+            va='bottom' if info['y_offset'] >= 0 else 'top'
+        )
+
+    # Show the plot
     plt.tight_layout()
     plt.show()
 
 
-def plot_per_flag_cumulative(stats, queries, flags_group, figure_title, method_names):
+
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def plot_per_flag_cumulative(stats, flags_group):
     mrr_df = stats['mrr_df']
-    flag_labels = stats['flag_labels']
 
-    fig, axes = plt.subplots(len(flags_group), 2, figsize=(15, 5 * len(flags_group)))
-    axes = axes.ravel()
+    # Plot for best_rank
+    fig_best, axes_best = plt.subplots(len(flags_group)//2, 2, figsize=(15, 5 * len(flags_group)//2))
+    axes_best = axes_best.ravel()
 
-    for i, flag in enumerate(flags_group):
-        for j, flag_value in enumerate([True, False]):
-            ax = axes[i*2 + j]
-            flag_label = flag_labels[flag]
-            df_filtered = mrr_df[mrr_df[flag_label] == flag_value]
+    # Plot for worst_rank
+    fig_worst, axes_worst = plt.subplots(len(flags_group)//2, 2, figsize=(15, 5 * len(flags_group)//2))
+    axes_worst = axes_worst.ravel()
+
+    # Plot for ndcg
+    fig_ndcg, axes_ndcg = plt.subplots(len(flags_group)//2, 2, figsize=(15, 5 * len(flags_group)//2))
+    axes_ndcg = axes_ndcg.ravel()
+
+    for i, flag_row in enumerate(zip(flags_group[::2], flags_group[1::2])):
+        for j, flag in enumerate(flag_row):
+            df_filtered = mrr_df[mrr_df[flag] == True]
             total_queries = len(df_filtered['query_id'].unique())
 
             if df_filtered.empty:
+                idx = i*2 + j
+                # For best_rank
+                ax = axes_best[idx]
                 ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
-                ax.set_title(f'{flag_label} = {flag_value}')
+                ax.set_title(flag)
+                ax.set_axis_off()
+
+                # For worst_rank
+                ax = axes_worst[idx]
+                ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
+                ax.set_title(flag)
+                ax.set_axis_off()
+
+                # For ndcg
+                ax = axes_ndcg[idx]
+                ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
+                ax.set_title(flag)
                 ax.set_axis_off()
                 continue
 
-            cumulative_data = []
+            # -----------------------
+            # Plot for best_rank
+            # -----------------------
+            cumulative_data_best = []
             for method_name, method_group in df_filtered.groupby("method"):
-                sorted_ranks = np.sort(method_group["rank"])
+                sorted_ranks = np.sort(method_group["best_rank"])
                 cumulative_counts = np.arange(1, len(sorted_ranks) + 1)
-                cumulative_data.extend({
+                cumulative_data_best.extend({
                     "method": method_name,
-                    "rank": rank,
+                    "best_rank": rank,
                     "cumulative_count": cum_count
                 } for rank, cum_count in zip(sorted_ranks, cumulative_counts))
 
-            cumulative_df = pd.DataFrame(cumulative_data)
-            cumulative_df = cumulative_df.groupby(['method', 'rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
-            total_counts = cumulative_df.groupby('method')['cumulative_count'].transform('max')
-            cumulative_df['cumulative_percent'] = (cumulative_df['cumulative_count'] / total_counts) * 100
+            cumulative_df_best = pd.DataFrame(cumulative_data_best)
+            cumulative_df_best = cumulative_df_best.groupby(['method', 'best_rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
+            total_counts_best = cumulative_df_best.groupby('method')['cumulative_count'].transform('max')
+            cumulative_df_best['cumulative_percent'] = (cumulative_df_best['cumulative_count'] / total_counts_best) * 100
 
+            ax_best = axes_best[i*2 + j]
             for method_name in df_filtered['method'].unique():
-                method_data = cumulative_df[cumulative_df['method'] == method_name]
-                ax.plot(method_data['rank'], method_data['cumulative_percent'], label=method_name, alpha=0.7)
+                method_data = cumulative_df_best[cumulative_df_best['method'] == method_name]
+                ax_best.plot(method_data['best_rank'], method_data['cumulative_percent'], label=method_name, alpha=0.7)
 
-            ax.set_title(f'{flag_label} = {flag_value} (Total = {total_queries})')
-            ax.set_xscale('log')
-            ax.set_xlabel('Rank (log scale)')
-            ax.set_ylabel('Cumulative Percentage (\%)')
-            ax.legend()
+            ax_best.set_title(f'{flag} ({total_queries} Queries Total)')
+            ax_best.set_xscale('log')
+            ax_best.set_xlabel('Best Rank (log scale)')
+            ax_best.set_ylabel('Cumulative Percentage (\%)')
+            ax_best.legend()
 
-    fig.suptitle(figure_title)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+            # -----------------------
+            # Plot for worst_rank
+            # -----------------------
+            cumulative_data_worst = []
+            for method_name, method_group in df_filtered.groupby("method"):
+                sorted_ranks = np.sort(method_group["worst_rank"])
+                cumulative_counts = np.arange(1, len(sorted_ranks) + 1)
+                cumulative_data_worst.extend({
+                    "method": method_name,
+                    "worst_rank": rank,
+                    "cumulative_count": cum_count
+                } for rank, cum_count in zip(sorted_ranks, cumulative_counts))
+
+            cumulative_df_worst = pd.DataFrame(cumulative_data_worst)
+            cumulative_df_worst = cumulative_df_worst.groupby(['method', 'worst_rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
+            total_counts_worst = cumulative_df_worst.groupby('method')['cumulative_count'].transform('max')
+            cumulative_df_worst['cumulative_percent'] = (cumulative_df_worst['cumulative_count'] / total_counts_worst) * 100
+
+            ax_worst = axes_worst[i*2 + j]
+            for method_name in df_filtered['method'].unique():
+                method_data = cumulative_df_worst[cumulative_df_worst['method'] == method_name]
+                ax_worst.plot(method_data['worst_rank'], method_data['cumulative_percent'], label=method_name, alpha=0.7)
+
+            ax_worst.set_title(f'{flag} ({total_queries} Queries Total)')
+            ax_worst.set_xscale('log')
+            ax_worst.set_xlabel('Worst Rank (log scale)')
+            ax_worst.set_ylabel('Cumulative Percentage (\%)')
+            ax_worst.legend()
+
+            # -----------------------
+            # Plot for ndcg
+            # -----------------------
+            cumulative_data_ndcg = []
+            for method_name, method_group in df_filtered.groupby("method"):
+                sorted_ndcg = np.sort(method_group["ndcg"])[::-1]  # Sort ndcg in descending order
+                cumulative_counts = np.arange(1, len(sorted_ndcg) + 1)
+                cumulative_percentages = (cumulative_counts / len(sorted_ndcg)) * 100
+                cumulative_data_ndcg.extend({
+                    "method": method_name,
+                    "ndcg": ndcg_score,
+                    "cumulative_percent": cum_percent
+                } for ndcg_score, cum_percent in zip(sorted_ndcg, cumulative_percentages))
+
+            cumulative_df_ndcg = pd.DataFrame(cumulative_data_ndcg)
+
+            ax_ndcg = axes_ndcg[i*2 + j]
+            for method_name in df_filtered['method'].unique():
+                method_data = cumulative_df_ndcg[cumulative_df_ndcg['method'] == method_name]
+                ax_ndcg.plot(method_data['ndcg'], method_data['cumulative_percent'], label=method_name, alpha=0.7)
+
+            ax_ndcg.set_title(f'{flag} ({total_queries} Queries Total)')
+            ax_ndcg.set_xlabel('nDCG')
+            ax_ndcg.set_ylabel('Cumulative Percentage (\%)')
+            ax_ndcg.legend()
+            ax_ndcg.invert_xaxis()  # Reverse the x-axis to go from 1 to 0
+
+    fig_best.suptitle("Cumulative Frequencies of Best Rank by Method and Query Property")
+    fig_best.tight_layout(pad=2, rect=[0, 0.03, 1, 0.95])
+    
+
+    fig_worst.suptitle(f"Cumulative Frequencies of Worst Rank by Method and Query Property")
+    fig_worst.tight_layout(pad=2, rect=[0, 0.03, 1, 0.95])
+
+    fig_ndcg.suptitle(f"Cumulative Frequencies of nDCG by Method and Query Property")
+    fig_ndcg.tight_layout(pad=2, rect=[0, 0.03, 1, 0.95])
     plt.show()
 
-    # # Display area data
-    # flag_area_df = stats['flag_area_df']
-    # print(f"\nArea under the curve (log-scaled x-axis) for {figure_title}:")
-    # print(flag_area_df.to_string(index=False))
-
-    # # Bar plot - combined for all flags
-    # area_df_melted = flag_area_df.melt(
-    #     id_vars=['Flag', 'Value', 'Total Queries'],
-    #     value_vars=method_names,
-    #     var_name='Method',
-    #     value_name='Area'
-    # )
-    # area_df_melted['Condition'] = area_df_melted['Flag'] + ' = ' + area_df_melted['Value'].astype(str)
-
-    # # Combined plot for all flags
-    # plt.figure(figsize=(12, 6))
-    # sns.barplot(data=area_df_melted, x='Condition', y='Area', hue='Method', ci=None)
-    # plt.title('Area under the Curve by Method for All Flags')
-    # plt.xticks(rotation=45, ha='right')
-    # plt.tight_layout()
-    # plt.show()
 
 
-def plot_language_cumulative(stats, queries, method_names):
+def plot_language_cumulative(stats, language_dict):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+
     mrr_df = stats['mrr_df']
-    top_languages = stats['top_5_metadata_languages'] + ['Other']
-    language_groups = top_languages
 
-    num_languages = len(language_groups)
-    subplots_per_fig = 6  # 12 subplots over two figures
-    for fig_idx in range(2):
-        fig, axes = plt.subplots(3, 2, figsize=(15, 15))
+    # The languages to be plotted come from the keys of the dictionary
+    # and their corresponding display names come from the values
+    language_groups = list(language_dict.keys())
+
+    # List of metrics to plot
+    metrics = ['best_rank', 'worst_rank', 'ndcg']
+
+    for metric in metrics:
+        if metric == 'best_rank':
+            metric_title = 'Best Rank'
+        elif metric == 'worst_rank':
+            metric_title = 'Worst Rank'
+        elif metric == 'ndcg':
+            metric_title = 'nDCG'
+        num_languages = len(language_groups)
+        # Create subplots: rows = number of languages, columns = 2 (Unilingual and Crosslingual)
+        fig, axes = plt.subplots(num_languages, 2, figsize=(15, 5 * num_languages))
         axes = axes.ravel()
-        start_idx = fig_idx * subplots_per_fig
-        end_idx = start_idx + subplots_per_fig
-        subplot_idx = 0
-        for idx in range(start_idx, end_idx):
-            if idx >= num_languages * 2:
-                break
-            lang_idx = idx // 2
-            equals_idx = idx % 2
-            lang = language_groups[lang_idx]
-            equals = [True, False][equals_idx]
 
-            ax = axes[subplot_idx]
-            df_filtered = mrr_df[
-                (mrr_df['language_group'] == lang) &
-                (mrr_df['query_lang_equals_metadata_lang'] == equals)
-            ]
-            total_queries = len(df_filtered['query_id'].unique())
+        for i, lang_key in enumerate(language_groups):
+            display_name = language_dict[lang_key]  # Get the display name from the dictionary
+            for j, linguicity in enumerate(["Unilingual", "Cross-Lingual"]):  # True for Unilingual, False for Crosslingual
+                idx = i * 2 + j
+                ax = axes[idx]
 
-            if df_filtered.empty:
-                ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
-                equals_str = "=" if equals else r"$\neq$"
-                ax.set_title(f'Language: {lang}\nTotal={total_queries}\nQuery Lang {equals_str} Metadata Lang')
-                ax.set_axis_off()
-                subplot_idx += 1
-                continue
+                # Regular filtering for the specified language
+                df_filtered = mrr_df[
+                    (mrr_df['query_language_top5'] == lang_key) &
+                    (mrr_df[linguicity])
+                ]
 
-            cumulative_data = []
-            for method_name, method_group in df_filtered.groupby("method"):
-                sorted_ranks = np.sort(method_group["rank"])
-                cumulative_counts = np.arange(1, len(sorted_ranks) + 1)
-                cumulative_data.extend({
-                    "method": method_name,
-                    "rank": rank,
-                    "cumulative_count": cum_count
-                } for rank, cum_count in zip(sorted_ranks, cumulative_counts))
+                total_queries = len(df_filtered['query_id'].unique())
 
-            cumulative_df = pd.DataFrame(cumulative_data)
-            cumulative_df = cumulative_df.groupby(['method', 'rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
-            total_counts = cumulative_df.groupby('method')['cumulative_count'].transform('max')
-            cumulative_df['cumulative_percent'] = (cumulative_df['cumulative_count'] / total_counts) * 100
+                if df_filtered.empty:
+                    ax.text(0.5, 0.5, 'No data available',
+                            horizontalalignment='center', verticalalignment='center')
+                    ax.set_title(f'{linguicity} {display_name} ({total_queries} Queries Total)')
+                    ax.set_axis_off()
+                    continue
 
-            for method_name in df_filtered['method'].unique():
-                method_data = cumulative_df[cumulative_df['method'] == method_name]
-                ax.plot(method_data['rank'], method_data['cumulative_percent'], label=method_name, alpha=0.7)
+                cumulative_data = []
+                for method_name, method_group in df_filtered.groupby("method"):
+                    if metric in ['best_rank', 'worst_rank']:
+                        sorted_values = np.sort(method_group[metric])
+                        cumulative_counts = np.arange(1, len(sorted_values) + 1)
+                        cumulative_data.extend({
+                            "method": method_name,
+                            metric: value,
+                            "cumulative_count": cum_count
+                        } for value, cum_count in zip(sorted_values, cumulative_counts))
+                    elif metric == 'ndcg':
+                        sorted_values = np.sort(method_group[metric])[::-1]  # Descending order
+                        cumulative_counts = np.arange(1, len(sorted_values) + 1)
+                        cumulative_percentages = (cumulative_counts / len(sorted_values)) * 100
+                        cumulative_data.extend({
+                            "method": method_name,
+                            metric: value,
+                            "cumulative_percent": cum_percent
+                        } for value, cum_percent in zip(sorted_values, cumulative_percentages))
 
-            equals_str = "=" if equals else r"$\neq$"
-            ax.set_title(f'Language: {lang} (Total={total_queries})\nQuery Lang {equals_str} Metadata Lang')
-            ax.set_xscale('log')
-            ax.set_xlabel('Rank (log scale)')
-            ax.set_ylabel('Cumulative Percentage (\%)')
-            ax.legend()
+                cumulative_df = pd.DataFrame(cumulative_data)
+                if metric in ['best_rank', 'worst_rank']:
+                    cumulative_df = cumulative_df.groupby(['method', metric]).size() \
+                        .groupby(level=0).cumsum().reset_index(name='cumulative_count')
+                    total_counts = cumulative_df.groupby('method')['cumulative_count'].transform('max')
+                    cumulative_df['cumulative_percent'] = (cumulative_df['cumulative_count'] / total_counts) * 100
 
-            subplot_idx +=1
+                for method_name in df_filtered['method'].unique():
+                    method_data = cumulative_df[cumulative_df['method'] == method_name]
+                    ax.plot(method_data[metric], method_data['cumulative_percent'],
+                            label=method_name, alpha=0.7)
 
-        fig.suptitle(f'Cumulative Percentages by Method (Languages {fig_idx+1})')
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+                ax.set_title(f'{linguicity} {display_name} ({total_queries} Queries Total)')
+
+                if metric in ['best_rank', 'worst_rank']:
+                    ax.set_xscale('log')
+                elif metric == 'ndcg':
+                    ax.invert_xaxis()  # Reverse x-axis for nDCG
+                ax.set_xlabel(metric_title)
+
+                ax.set_ylabel('Cumulative Percentage (\%)')
+                ax.legend()
+
+        figure_title = "Cumulative Frequencies of " + metric_title + " by Language"
+        fig.suptitle(f'{figure_title}')
+        plt.tight_layout(pad=2, rect=[0, 0.03, 1, 0.95])
         plt.show()
 
-    # # Display area data
-    # language_area_df = stats['language_area_df']
-    # print("\nArea under the curve (log-scaled x-axis) for Language Cumulative:")
-    # print(language_area_df.to_string(index=False))
 
-    # # Bar plots
-    # area_df_melted = language_area_df.melt(
-    #     id_vars=['Language', 'Query Lang Equals Metadata Lang', 'Total Queries'],
-    #     value_vars=method_names,
-    #     var_name='Method',
-    #     value_name='Area'
-    # )
-    # area_df_melted['Condition'] = area_df_melted.apply(
-    #     lambda row: f"{row['Language']} - {'Equal' if row['Query Lang Equals Metadata Lang'] else 'Not Equal'}",
-    #     axis=1
-    # )
+def plot_per_flag_bar(stats, flags_group, figure_title):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
 
-    # plt.figure(figsize=(12, 6))
-    # sns.barplot(data=area_df_melted, x='Condition', y='Area', hue='Method', ci=None)
-    # plt.title('Area under the Curve by Method for Language Cumulative')
-    # plt.xticks(rotation=45, ha='right')
-    # plt.tight_layout()
-    # plt.show()
-
-
-def plot_language_cumulative(stats, queries, method_names):
     mrr_df = stats['mrr_df']
-    top_languages = stats['top_5_metadata_languages'] + ['Other']
-    language_groups = top_languages
+    method_names = stats['method_order']
 
-    num_languages = len(language_groups)
-    subplots_per_fig = 6  # 12 subplots over two figures
-    for fig_idx in range(2):
-        fig, axes = plt.subplots(3, 2, figsize=(15, 15))
-        axes = axes.ravel()
-        start_idx = fig_idx * subplots_per_fig
-        end_idx = start_idx + subplots_per_fig
-        subplot_idx = 0
-        for idx in range(start_idx, end_idx):
-            if idx >= num_languages * 2:
-                break
-            lang_idx = idx // 2
-            equals_idx = idx % 2
-            lang = language_groups[lang_idx]
-            equals = [True, False][equals_idx]
+    data = []
 
-            ax = axes[subplot_idx]
+    for flag in flags_group:
+            
+            df_filtered = mrr_df[mrr_df[flag] == True]
+            if not df_filtered.empty:
+                for method in method_names:
+                    df_method = df_filtered[df_filtered['method'] == method]
+                    if not df_method.empty:
+                        # Collect individual nDCG values
+                        for ndcg_value in df_method['ndcg']:
+                            data.append({
+                                'method': method,
+                                'flag_label': flag,
+                                'ndcg': ndcg_value
+                            })
+
+    df_data = pd.DataFrame(data)
+
+    # Function to split long labels
+    def split_label(label, max_length=20):
+        if len(label) <= max_length:
+            return label
+        else:
+            mid = len(label) // 2
+            # Find nearest space to mid
+            split_pos = label.rfind(' ', 0, mid)
+            if split_pos == -1:
+                split_pos = label.find(' ', mid)
+                if split_pos == -1:
+                    split_pos = mid
+            part1 = label[:split_pos]
+            part2 = label[split_pos:].strip()
+            return part1 + '\n' + part2
+
+    df_data['flag_label'] = df_data['flag_label'].apply(split_label)
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=df_data,
+        x='flag_label',
+        y='ndcg',
+        hue='method',
+        estimator=np.mean,
+        ci='sd',
+        capsize=0.2
+    )
+    plt.xlabel('Query Property')
+    plt.ylabel('Average nDCG')
+    plt.title(figure_title)
+    plt.legend(title='Method')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+
+
+def plot_language_bar(stats, language_dict):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    mrr_df = stats['mrr_df']
+    method_names = stats['method_order']
+
+    data = []
+
+    # The languages to be plotted come from the keys of the dictionary
+    # and their corresponding display names come from the values
+    language_groups = list(language_dict.keys())
+
+    for i, lang_key in enumerate(language_groups):
+        display_name = language_dict[lang_key]  # Get the display name from the dictionary
+        for j, linguicity in enumerate(["Unilingual", "Cross-Lingual"]):  # True for Unilingual, False for Crosslingual
+
+            # Regular filtering for the specified language
             df_filtered = mrr_df[
-                (mrr_df['language_group'] == lang) &
-                (mrr_df['query_lang_equals_metadata_lang'] == equals)
+                (mrr_df['query_language_top5'] == lang_key) &
+                (mrr_df[linguicity])
             ]
-            total_queries = len(df_filtered['query_id'].unique())
+            lang_label = f'{display_name} ({linguicity})'
 
-            if df_filtered.empty:
-                ax.text(0.5, 0.5, 'No data available', horizontalalignment='center', verticalalignment='center')
-                equals_str = "=" if equals else r"$\neq$"
-                ax.set_title(f'Language: {lang}\nTotal={total_queries}\nQuery Lang {equals_str} Metadata Lang')
-                ax.set_axis_off()
-                subplot_idx += 1
-                continue
+            if not df_filtered.empty:
+                for method in method_names:
+                    df_method = df_filtered[df_filtered['method'] == method]
+                    if not df_method.empty:
+                        # Collect individual nDCG values
+                        for ndcg_value in df_method['ndcg']:
+                            data.append({
+                                'method': method,
+                                'language': lang_label,
+                                'ndcg': ndcg_value
+                            })
 
-            cumulative_data = []
-            for method_name, method_group in df_filtered.groupby("method"):
-                sorted_ranks = np.sort(method_group["rank"])
-                cumulative_counts = np.arange(1, len(sorted_ranks) + 1)
-                cumulative_data.extend({
-                    "method": method_name,
-                    "rank": rank,
-                    "cumulative_count": cum_count
-                } for rank, cum_count in zip(sorted_ranks, cumulative_counts))
+    df_data = pd.DataFrame(data)
 
-            cumulative_df = pd.DataFrame(cumulative_data)
-            cumulative_df = cumulative_df.groupby(['method', 'rank']).size().groupby(level=0).cumsum().reset_index(name='cumulative_count')
-            total_counts = cumulative_df.groupby('method')['cumulative_count'].transform('max')
-            cumulative_df['cumulative_percent'] = (cumulative_df['cumulative_count'] / total_counts) * 100
+    # Function to split long labels
+    def split_label(label, max_length=20):
+        if len(label) <= max_length:
+            return label
+        else:
+            mid = len(label) // 2
+            # Find nearest space to mid
+            split_pos = label.rfind(' ', 0, mid)
+            if split_pos == -1:
+                split_pos = label.find(' ', mid)
+                if split_pos == -1:
+                    split_pos = mid
+            part1 = label[:split_pos]
+            part2 = label[split_pos:].strip()
+            return part1 + '\n' + part2
 
-            for method_name in df_filtered['method'].unique():
-                method_data = cumulative_df[cumulative_df['method'] == method_name]
-                ax.plot(method_data['rank'], method_data['cumulative_percent'], label=method_name, alpha=0.7)
+    df_data['language'] = df_data['language'].apply(split_label)
 
-            equals_str = "=" if equals else r"$\neq$"
-            ax.set_title(f'Language: {lang} (Total={total_queries})\nQuery Lang {equals_str} Metadata Lang')
-            ax.set_xscale('log')
-            ax.set_xlabel('Rank (log scale)')
-            ax.set_ylabel('Cumulative Percentage (\%)')
-            ax.legend()
-
-            subplot_idx +=1
-
-        fig.suptitle(f'Cumulative Percentages by Method (Languages {fig_idx+1})')
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])
-        plt.show()
-
-    # # Display area data
-    # language_area_df = stats['language_area_df']
-    # print("\nArea under the curve (log-scaled x-axis) for Language Cumulative:")
-    # print(language_area_df.to_string(index=False))
-
-    # # Bar plots
-    # area_df_melted = language_area_df.melt(
-    #     id_vars=['Language', 'Query Lang Equals Metadata Lang', 'Total Queries'],
-    #     value_vars=method_names,
-    #     var_name='Method',
-    #     value_name='Area'
-    # )
-    # area_df_melted['Condition'] = area_df_melted.apply(
-    #     lambda row: f"{row['Language']} - {'Equal' if row['Query Lang Equals Metadata Lang'] else 'Not Equal'}",
-    #     axis=1
-    # )
-
-    # plt.figure(figsize=(12, 6))
-    # sns.barplot(data=area_df_melted, x='Condition', y='Area', hue='Method', ci=None)
-    # plt.title('Area under the Curve by Method for Language Cumulative')
-    # plt.xticks(rotation=45, ha='right')
-    # plt.tight_layout()
-    # plt.show()
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=df_data,
+        x='language',
+        y='ndcg',
+        hue='method',
+        estimator=np.mean,
+        ci='sd',
+        capsize=0.2
+    )
+    plt.xlabel('Language')
+    plt.ylabel('Average nDCG')
+    plt.title('Average nDCG by Method and Language')
+    plt.legend(title='Method')
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
 
 
-def plot_language_confusion_matrix(stats, queries):
+
+
+def plot_language_confusion_matrix(stats):
     # Get the language confusion matrix
-    language_confusion = stats['language_confusion_collapsed']
+    language_confusion = stats['language_confusion']
 
-    # Sum over query languages to get frequencies of metadata languages
-    metadata_lang_totals = language_confusion.sum(axis=0)
+    # # Sum over query languages to get frequencies of metadata languages
+    # metadata_lang_totals = language_confusion.sum(axis=0)
     
-    # Sort the metadata languages by frequency in descending order
-    sorted_metadata_langs = metadata_lang_totals.sort_values(ascending=False).index.tolist()
+    # # Sort the metadata languages by frequency in descending order
+    # sorted_metadata_langs = metadata_lang_totals.sort_values(ascending=False).index.tolist()
+
+    # # Check if "Other" is in the sorted list, and if so, move it to the end
+    # if "Other" in sorted_metadata_langs:
+    #     sorted_metadata_langs.remove("Other")
+    #     sorted_metadata_langs.append("Other")
 
     # Reorder both rows and columns of the confusion matrix based on sorted metadata languages
-    language_confusion_sorted = language_confusion.reindex(index=sorted_metadata_langs, columns=sorted_metadata_langs)
+    # language_confusion_sorted = language_confusion.reindex(index=sorted_metadata_langs, columns=sorted_metadata_langs)
 
     plt.figure(figsize=(12, 10))
-    sns.heatmap(language_confusion_sorted, annot=True, cmap='coolwarm', fmt='g')
+    sns.heatmap(language_confusion, annot=True, cmap='coolwarm', fmt='g')
     plt.title('Language Confusion Matrix (Top 20 Languages + Other)')
     plt.xlabel('Metadata Language')
     plt.ylabel('Query Language')
     plt.tight_layout()
     plt.show()
 
-def plot_queries_per_image(stats, queries):
+
+def plot_queries_per_image(stats):
     image_query_counts = list(stats['image_query_count'].values())
     total_images = len(stats['image_query_count'])
 
@@ -1005,8 +1374,8 @@ def plot_queries_per_image(stats, queries):
     plt.tight_layout()
     plt.show()
 
-def plot_flag_distribution(stats, queries):
-    flag_labels = stats['flag_labels']
+def plot_flag_distribution(stats):
+    flag_labels = stats['positive_flag_labels']
     # Map flag counts to readable labels
     flag_counts = {flag_labels[k]: v for k, v in stats['flag_counts'].items()}
 
@@ -1019,7 +1388,7 @@ def plot_flag_distribution(stats, queries):
     plt.tight_layout()
     plt.show()
 
-def plot_top_referenced_images(stats, queries):
+def plot_top_referenced_images(stats):
     top_images = stats['image_query_count'].most_common(10)
     image_ids, query_counts = zip(*top_images)
 
@@ -1032,8 +1401,8 @@ def plot_top_referenced_images(stats, queries):
     plt.tight_layout()
     plt.show()
 
-def plot_cooccurrence_matrix(stats, queries):
-    flag_labels = stats['flag_labels']
+def plot_cooccurrence_matrix(stats):
+    flag_labels = stats['positive_flag_labels']
     # Map flag names to readable labels
     flag_names = [flag_labels[fn] for fn in stats['flag_names']]
 
@@ -1049,20 +1418,55 @@ def plot_cooccurrence_matrix(stats, queries):
 def main():
     # Initialize retrievers dynamically
     host = "http://localhost:7070"
-    retrievers = [
-        ClipRetriever(schema_name="baseline", host=host),
-        CaptionDenseRetriever(schema_name="no-metadata", host=host),
-        CaptionDenseRetriever(schema_name="with-metadata", host=host),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.9, caption_dense_weight=0.1),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.8, caption_dense_weight=0.2),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.7, caption_dense_weight=0.3),
-        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.6, caption_dense_weight=0.4)#,
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.4, caption_dense_weight=0.6),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.3, caption_dense_weight=0.7),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.2, caption_dense_weight=0.8),
-        # ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.1, caption_dense_weight=0.9)
-    ]
+    # retrievers = [
+    #     ClipRetriever(schema_name="baseline", host=host, method_name="CLIP"),
+    #     # # CaptionDenseRetriever(schema_name="no-metadata", host=host),
+    #     CaptionDenseRetriever(schema_name="with-metadata", method_name="Ours", host=host),
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="Fusion", host=host, clip_weight=0.6, caption_dense_weight=0.4)
+    # ]
+    
+    # retrievers = [
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="90\% Clip, 10\% Ours", host=host, clip_weight=0.9, caption_dense_weight=0.1),
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="70\% Clip, 30\% Ours", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="60\% Clip, 40\% Ours", host=host, clip_weight=0.6, caption_dense_weight=0.4), # good
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="50\% Clip, 50\% Ours", host=host, clip_weight=0.5, caption_dense_weight=0.5),
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="30\% Clip, 70\% Ours", host=host, clip_weight=0.3, caption_dense_weight=0.7),
+    # ]
+    
+    # retrievers = [
+    #     ClipRetriever(schema_name="baseline", host=host, method_name="Open Clip"),
+    #     ClipRetriever(schema_name="clipvitl14", host=host, method_name="OpenAI Clip"),
+    #     CaptionDenseRetriever(schema_name="with-metadata", method_name="Ours", host=host),
+    #     ClipDenseCaptionFusionRetriever(schema_name="with-metadata", method_name="Ours + Open Clip", host=host, clip_weight=0.6, caption_dense_weight=0.4)
+    # ]
+    
+    # retrievers = [
+    #     ClipDenseCaptionFusionRetriever(schema_name="full-metadata", method_name="70\% Clip, 30\% Ours (All Metadata)", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+    #     ClipDenseCaptionFusionRetriever(schema_name="full-metadata", method_name="60\% Clip, 40\% Ours (All Metadata)", host=host, clip_weight=0.6, caption_dense_weight=0.4),
+    #     ClipDenseCaptionFusionRetriever(schema_name="full-metadata", method_name="50\% Clip, 50\% Ours (All Metadata)", host=host, clip_weight=0.5, caption_dense_weight=0.5),
+    #     ClipDenseCaptionFusionRetriever(schema_name="full-metadata", method_name="40\% Clip, 60\% Ours (All Metadata)", host=host, clip_weight=0.4, caption_dense_weight=0.6), # good
+    #     ClipDenseCaptionFusionRetriever(schema_name="full-metadata", method_name="30\% Clip, 70\% Ours (All Metadata)", host=host, clip_weight=0.3, caption_dense_weight=0.7),
+    # ]
+    
+    # retrievers = [
+    #     ClipDenseCaptionFusionRetriever(schema_name="two-categories", method_name="70\% Clip, 30\% Ours (Two Categories)", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+    #     ClipDenseCaptionFusionRetriever(schema_name="two-categories", method_name="60\% Clip, 40\% Ours (Two Categories)", host=host, clip_weight=0.6, caption_dense_weight=0.4),
+    #     ClipDenseCaptionFusionRetriever(schema_name="two-categories", method_name="50\% Clip, 50\% Ours (Two Categories)", host=host, clip_weight=0.5, caption_dense_weight=0.5), # good
+    #     ClipDenseCaptionFusionRetriever(schema_name="two-categories", method_name="40\% Clip, 60\% Ours (Two Categories)", host=host, clip_weight=0.4, caption_dense_weight=0.6),
+    #     ClipDenseCaptionFusionRetriever(schema_name="two-categories", method_name="30\% Clip, 70\% Ours (Two Categories)", host=host, clip_weight=0.3, caption_dense_weight=0.7),
+    # ]
+    
+    retrievers = list(reversed([
+        CaptionDenseRetriever(schema_name="no-metadata", method_name="Ours (No Metadata)" ,host=host),
+        ClipRetriever(schema_name="baseline", host=host, method_name="CLIP"),
+        CaptionDenseRetriever(schema_name="with-metadata", method_name="Ours (One Category)", host=host),
+        CaptionDenseRetriever(schema_name="two-categories", method_name="Ours (Two Categories)", host=host),
+        CaptionDenseRetriever(schema_name="full-metadata", method_name="Ours (All Metadata)", host=host),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", method_name="Best Fusion (All Metadata + CLIP)", host=host, clip_weight=0.4, caption_dense_weight=0.6)
+    ]))
+    
+
+
 
     # Load the queries from the database
     queries = load_queries(retrievers)
@@ -1079,39 +1483,52 @@ def main():
     # Compute stats
     stats = compute_stats(queries, image_ids, retrievers)
 
-    # Visualizations
-    plot_overall_cumulative(stats, queries)
-
     # Now, split the flags into two groups of three
     flags_group1 = [
-        'historic_period',
-        'location',
-        'traditional_customs_practices'
+        'References a Historic Period',
+        'Does not Reference a Historic Period',
+        'References a Location',
+        'Does not Reference a Location',
     ]
     flags_group2 = [
-        'query_language_equals_metadata_language',
-        'goes_beyond_metadata_using_image_contents',
-        'references_individual'
+        'References Customs or Practices',
+        'Does not Reference Customs or Practices',
+        'Unilingual',
+        'Cross-Lingual'
     ]
-    method_names = [retriever.get_method_name() for retriever in retrievers]
+    flags_group3 = [
+        'Metadata Queries',
+        'Content Queries',
+        'References an Individual',
+        'Does not Reference an Individual'
+    ]
 
 
-    plot_per_flag_cumulative(stats, queries, flags_group1, 'Cumulative Percentages by Method (Flags Group 1)', method_names)
-    plot_per_flag_cumulative(stats, queries, flags_group2, 'Cumulative Percentages by Method (Flags Group 2)', method_names)
 
-    # Plot cumulative subplots for top 5 languages and 'Other'
-    plot_language_cumulative(stats, queries, method_names)
+    # Visualizations
+    plot_overall_cumulative(stats)
+    # plot_per_flag_cumulative(stats, flags_group1)
+    # plot_per_flag_cumulative(stats, flags_group2)
+    # plot_per_flag_cumulative(stats, flags_group3)
 
-    # Other plotting functions
-    plot_language_confusion_matrix(stats, queries)
-    plot_queries_per_image(stats, queries)
-    plot_flag_distribution(stats, queries)
-    plot_top_referenced_images(stats, queries)
-    plot_cooccurrence_matrix(stats, queries)
+    # # Plot cumulative subplots for top 5 languages and 'Other'
+    # plot_language_cumulative(stats, {"en":"English", "de":"German"})
+    # plot_language_cumulative(stats, {"es":"Spanish", "it":"Italian"})
+    # plot_language_cumulative(stats, {"ru":"Russian", "Other":"Other"})
+    
+    # plot_per_flag_bar(stats, flags_group1 + flags_group2 + flags_group3, 'Average nDCG by Query Property and Method')
+    # plot_language_bar(stats, {"en":"English", "de": "German", "es":"Spanish", "it": "Italian", "ru":"Russian", "Other":"Other"})
 
-    # Close the database connection
-    cur.close()
-    conn.close()
+    # # Other plotting functions
+    plot_language_confusion_matrix(stats)
+    # plot_queries_per_image(stats, queries)
+    # plot_flag_distribution(stats, queries)
+    # plot_top_referenced_images(stats, queries)
+    # plot_cooccurrence_matrix(stats, queries)
+
+    # # Close the database connection
+    # cur.close()
+    # conn.close()
 
 
 # Run the main function
