@@ -1,0 +1,64 @@
+{
+  "schema": "speedbenchmark",
+  "context": {
+    "contentFactory": "CachedContentFactory",
+    "resolverName": "disk",
+    "local": {
+      "content": {
+        "path": "../cache"
+      },
+      "enumerator": {
+        "path": "../benchmark/completed_images_with_categories",
+        "depth": "5"
+      },
+      "imageSourceFilter": {
+        "type": "SOURCE:IMAGE"
+      },
+      "clip": {
+        "contentSources": "selector,imageDecoder"
+      }
+    }
+  },
+  "operators": {
+    "passthrough": {
+      "type": "TRANSFORMER",
+      "factory": "PassthroughTransformer"
+    },
+    "enumerator": {
+      "type": "ENUMERATOR",
+      "factory": "FileSystemEnumerator",
+      "mediaTypes": ["IMAGE"]
+    },
+    "imageDecoder": {
+      "type": "DECODER",
+      "factory": "ImageDecoder"
+    },
+    "fileMetadata":{
+      "type": "EXTRACTOR",
+      "fieldName": "file"
+    },
+    "clip": {
+      "type": "EXTRACTOR",
+      "fieldName": "clip"
+    },
+    "imageSourceFilter": {
+      "type": "TRANSFORMER",
+      "factory": "TypeFilterTransformer"
+    },
+    "selector": {
+      "type": "TRANSFORMER",
+      "factory": "LastContentAggregator"
+    }
+  },
+  "operations": {
+    "enumerator-stage": {"operator": "enumerator"},
+    "image-decoder-stage": {"operator": "imageDecoder", "inputs": ["enumerator-stage"]},
+    "image-clip-stage": {"operator": "clip", "inputs": ["image-decoder-stage"]},
+    "image-file-metadata-stage": {"operator": "fileMetadata", "inputs": ["image-clip-stage"], "merge": "MERGE"},
+    "image-filter-stage": {"operator": "imageSourceFilter", "inputs": ["image-file-metadata-stage"]}
+  },
+  "output": [
+    "image-filter-stage"
+  ],
+  "mergeType": "MERGE"
+}
