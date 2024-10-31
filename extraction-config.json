@@ -1,0 +1,22 @@
+{
+	"input":{
+		"path": "benchmark/completed_images_with_categories",
+		"depth": 5,
+		"skip": 0,
+		"id": {
+			"name": "SequentialObjectIdGenerator",
+			"properties": {}
+		}
+	},
+	"extractors":[
+		{"name": "VisualTextCoEmbedding"}
+	],
+	"metadata": [
+	],
+	"exporters":[
+	],
+	"database":{
+		"writer": "COTTONTAIL",
+		"selector": "COTTONTAIL"
+	}
+}

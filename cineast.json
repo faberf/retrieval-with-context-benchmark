@@ -1,0 +1,94 @@
+{
+    "database": {
+      "host": "localhost",
+      "port": 1865,
+      "plaintext": true
+    },
+    "retriever": {
+      "threadPoolSize": 10,
+      "maxResults": 10000,
+      "resultsPerModule": 5000,
+      "features": {
+        "visualtextcoembedding": [
+          {"feature": "VisualTextCoEmbedding", "weight": 1.0}
+        ],
+        "ocr": [
+          {"feature": "OCRSearch", "weight": 1.0}
+        ],
+        "boolean": [
+          {
+            "feature": "RangeBooleanRetriever", "weight": 1.0,
+            "properties": {
+              "entity": "cineast_segment",
+              "attribute": "segmentid,objectid",
+          "idCol": "segmentid"
+            }
+          }
+        ],
+        "clip": [
+          {
+            "feature": "CLIPText",
+            "weight": 1.0
+          }
+        ],
+        "mlt": [
+          {"feature": "InceptionResnetV2", "weight": 1.0}
+        ]
+      }
+    },
+  
+    "decoders": {
+      "VIDEO": {
+        "decoder": "FFMpegVideoDecoder",
+        "properties": {
+          "maxFrameWidth": 640,
+          "maxFrameHeight": 480
+        }
+      },
+      "IMAGE": {
+        "decoder": "DefaultImageDecoder",
+        "properties": {
+          "bounds": 1024
+        }
+      },
+      "AUDIO": {
+        "decoder": "FFMpegAudioDecoder",
+        "properties": {
+          "samplerate": 44100,
+          "channels": 2
+        }
+      }
+    },
+  
+    "extractor": {
+      "threadPoolSize": 30,
+      "outputLocation": "out"
+    },
+    
+  
+    "api": {
+      "enableCLI": true,
+      "enableWebsocket": true,
+      "enableWebsocketSecure": false,
+      "enableRest": true,
+      "enableRestLiveDoc": true,
+      "enableRestSecure": false,
+      "enableLegacy": false,
+      "httpPort": 4567,
+      "httpsPort": 4568,
+      "legacyPort": 12345,
+      "threadPoolSize": 12,
+      "serveContent": true,
+      "serveUI": false,
+      "thumbnailLocation": "../ptt-data/thumbnails",
+      "objectLocation": "../ptt-data/objects/",
+      "objectsFilesAreIDed": false
+    },
+  
+    "monitoring":{
+      "enablePrometheus": false,
+      "prometheusPort": 4569
+    }
+  
+  }
+  
