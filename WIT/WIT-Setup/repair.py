@@ -44,24 +44,21 @@ def embed(text):
     # Extract and return only the embedding list
     return response.json().get("embedding", [])
 
-def fetch_rows(input_schema, input_table):
-    # Define the query to fetch retrievableid and value columns
+def fetch_unembedded_ids(input_schema, input_table, output_schema, output_table):
+    # Query to find retrievable IDs in input table without vectors in output table
     query = f"""
-    SELECT retrievableid, value
-    FROM "{input_schema}".{input_table};
+    SELECT i.retrievableid, i.value
+    FROM "{input_schema}".{input_table} AS i
+    LEFT JOIN "{output_schema}".{output_table} AS o
+    ON i.retrievableid = o.retrievableid
+    WHERE o.vector IS NULL;
     """
     
-    # Execute the query
     cur.execute(query)
-    print("Query executed successfully.")  # Confirm query execution
+    print("Fetched retrievable IDs that need embedding.")
     
-    # Fetch all rows at once and iterate over them
-    rows = cur.fetchall()
-    if not rows:
-        print("No rows found in the table.")
-        
-    for row in rows:
-        yield row[0], row[1]
+    # Return a generator of rows to conserve memory
+    return cur.fetchall()
 
 def ensure_vector_column_exists(output_schema, output_table):
     # Check if the 'vector' column exists
@@ -99,8 +96,10 @@ def update_rows(output_schema, output_table, retrievableid, embedding):
 print("Ensuring 'vector' column exists...")
 ensure_vector_column_exists(args.output_schema, args.output_table)
 
-print("Fetching rows from the database...")
-for retrievableid, value in fetch_rows(args.input_schema, args.input_table):
+print("Fetching rows that need embeddings...")
+rows_to_embed = fetch_unembedded_ids(args.input_schema, args.input_table, args.output_schema, args.output_table)
+
+for retrievableid, value in rows_to_embed:
     print(f"Retrievable ID: {retrievableid}, Value: {value}")
     print("Embedding value...")
     embedding = embed(value)
