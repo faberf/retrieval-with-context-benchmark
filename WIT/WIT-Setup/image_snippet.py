@@ -621,13 +621,13 @@ def make_prompt(query):
         f"For each image, please explain why it is or is not a correct result for the query '{query}'. "
         "Think carefully and consider every aspect of the query, the visible image content, and any metadata available. "
         "If information is missing or unclear, use web search to find additional context by carefully selecting a search term that helps you determine relevancy. "
-        "Make sure not to include image labels such as 'Image X' in your search term, as these labels are only for your reference."
+        "Make sure not to include image labels such as 'Image X' in your search term, as these labels are only for your reference. "
         "Make sure to search the web for each image until you have all necessary information to make a decision. "
         "Keep in mind that web search results may not always be accurate, relevant or up-to-date and should thus be ignored. "
         "Be very strict in your evaluation and consider an image incorrect when in doubt. "
         "Err on the side of caution and only mark an image as correct if you are certain it is relevant to the query. "
         "When explaining why an image is correct or incorrect, provide as much detail as possible and include sources from the web if relevant. "
-        f"As a reference, Image A is definitely a correct result for the query '{query}'."
+        f"As a reference, Image A is definitely a correct result for the query '{query}'. "
         "Finally, after thinking through step by step, provide a python dictionary with labels of images that are correct results and explanation strings as values. "
         f"Do not include labels of images that are incorrect results for the query '{query}' in the dictionary. "
     )
@@ -685,7 +685,17 @@ def send_to_chat_model(human_message):
         return send_to_chat_model(human_message)
     return invocation["output"]
     
+def remove_image_and_capitalize(input_string):
+    # Remove 'image' in any case format and strip extra spaces
+    cleaned_string = re.sub(r'\bimage\b', '', input_string, flags=re.IGNORECASE).strip()
+    
+    # Check if there is more than one character left (e.g., "A and B")
+    remaining_chars = cleaned_string.split()
+    if len(remaining_chars) > 1:
+        raise ValueError("More than one letter remains after removing 'image'.")
 
+    # Return the remaining character in uppercase if exists
+    return remaining_chars[0].upper() if remaining_chars else None
 
 def process_query(query_id, query, original_image_filename, retrieved_paths_list):
     try:
@@ -745,9 +755,13 @@ def process_query(query_id, query, original_image_filename, retrieved_paths_list
 
                 # Map the retrieved image paths to the corresponding explanations
                 path_explanation_mapping = {
-                    retrieved_paths[labels.index(label)]: explanation
+                    retrieved_paths[labels.index(remove_image_and_capitalize(label))]: explanation
                     for label, explanation in extracted_dict.items()
                 }
+                
+                if not retrieved_paths[0] in path_explanation_mapping:
+                    path_explanation_mapping[retrieved_paths[0]] = "ORIGINAL"
+                
 
                 # Update the outer dictionary with the current batch's path-to-explanation mapping
                 outer_extracted_dict.update(path_explanation_mapping)
