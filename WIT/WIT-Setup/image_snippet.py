@@ -496,15 +496,6 @@ def create_image_grid(image_filenames, output_filename, padding=10, max_size=100
 import piexif
 
 import ast
-
-import ast
-
-import ast
-import re
-import ast
-import re
-
-import ast
 import re
 
 def extract_dict_from_string(s):
@@ -608,7 +599,7 @@ queries = cur.fetchall()
 import json
 
 # Initialize the retriever
-host = "http://localhost:7070"
+host = "http://10.34.64.84:7071"
 retriever = ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.6, caption_dense_weight=0.4)
 
 
@@ -653,7 +644,7 @@ class MyTool(DuckDuckGoSearchResults):
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         global last_time
-        while time.time() - last_time < 1:
+        while time.time() - last_time < 10:
             time.sleep(1)
         last_time = time.time()
         return super()._run(query, run_manager)
@@ -785,7 +776,7 @@ def process_query(query_id, query, original_image_filename, retrieved_paths_list
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Maximum number of worker threads
-MAX_THREADS = 10
+MAX_THREADS = 1
 
 def main():
     threads = []
