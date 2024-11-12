@@ -622,7 +622,7 @@ def make_prompt(query):
         "Think carefully and consider every aspect of the query, the visible image content, and any metadata available. "
         "If information is missing or unclear, use web search to find additional context by carefully selecting a search term that helps you determine relevancy. "
         "Make sure not to include image labels such as 'Image X' in your search term, as these labels are only for your reference. "
-        "Make sure to search the web for each image until you have all necessary information to make a decision. "
+        #"Make sure to search the web until you have all necessary information to make a decision. "
         "Keep in mind that web search results may not always be accurate, relevant or up-to-date and should thus be ignored. "
         "Be very strict in your evaluation and consider an image incorrect when in doubt. "
         "Err on the side of caution and only mark an image as correct if you are certain it is relevant to the query. "
@@ -767,7 +767,7 @@ def process_query(query_id, query, original_image_filename, retrieved_paths_list
                 outer_extracted_dict.update(path_explanation_mapping)
 
                 # Stop processing further batches if the current extracted dictionary contains exactly one key
-                if len(extracted_dict) == 1:
+                if len(path_explanation_mapping) == 1:
                     print(f"Query {query_id}: Stopping, found exactly 1 key in batch {batch_index}.")
                     break  # Exit the loop when we find exactly one key
             else:
@@ -790,7 +790,7 @@ def process_query(query_id, query, original_image_filename, retrieved_paths_list
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Maximum number of worker threads
-MAX_THREADS = 1
+MAX_THREADS = 5
 
 def main():
     threads = []
