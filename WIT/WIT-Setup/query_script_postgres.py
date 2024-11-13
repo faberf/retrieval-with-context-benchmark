@@ -274,8 +274,10 @@ def process_queries_db():
     host = "http://localhost:7070"
     retrievers = [
         ClipRetriever(schema_name="baseline", host=host),
+        ClipRetriever(schema_name="clipvitl14", host=host),
         CaptionDenseRetriever(schema_name="no-metadata", host=host),
         CaptionDenseRetriever(schema_name="with-metadata", host=host),
+        CaptionDenseRetriever(schema_name="two-categories", host=host),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.9, caption_dense_weight=0.1),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.8, caption_dense_weight=0.2),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.7, caption_dense_weight=0.3),
@@ -283,8 +285,30 @@ def process_queries_db():
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.4, caption_dense_weight=0.6),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.3, caption_dense_weight=0.7),
-        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.2, caption_dense_weight=0.8),
-        ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.1, caption_dense_weight=0.9)
+        
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.9, caption_dense_weight=0.1),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.8, caption_dense_weight=0.2),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.6, caption_dense_weight=0.4),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.4, caption_dense_weight=0.6),
+        ClipDenseCaptionFusionRetriever(schema_name="full-metadata", host=host, clip_weight=0.3, caption_dense_weight=0.7),
+        
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.9, caption_dense_weight=0.1),
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.8, caption_dense_weight=0.2),
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.6, caption_dense_weight=0.4),
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.5, caption_dense_weight=0.5),
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.4, caption_dense_weight=0.6),
+        ClipDenseCaptionFusionRetriever(schema_name="no-metadata", host=host, clip_weight=0.3, caption_dense_weight=0.7),
+        
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.9, caption_dense_weight=0.1),
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.8, caption_dense_weight=0.2),
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.7, caption_dense_weight=0.3),
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.6, caption_dense_weight=0.4),
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.5, caption_dense_weight=0.5),
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.4, caption_dense_weight=0.6),
+        ClipDenseCaptionFusionRetriever(schema_name="two-categories", host=host, clip_weight=0.3, caption_dense_weight=0.7)
     ]
 
     # Ensure tables exist
