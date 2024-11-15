@@ -278,6 +278,7 @@ def process_queries_db():
         CaptionDenseRetriever(schema_name="no-metadata", host=host),
         CaptionDenseRetriever(schema_name="with-metadata", host=host),
         CaptionDenseRetriever(schema_name="two-categories", host=host),
+        CaptionDenseRetriever(schema_name="full-metadata", host=host),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.9, caption_dense_weight=0.1),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.8, caption_dense_weight=0.2),
         ClipDenseCaptionFusionRetriever(schema_name="with-metadata", host=host, clip_weight=0.7, caption_dense_weight=0.3),
