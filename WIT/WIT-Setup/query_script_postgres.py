@@ -333,6 +333,7 @@ def process_queries_db():
         if not remaining_retrievers:
             print(f"All retrievers have processed query {query_id}. Skipping.")
             continue
+        print(f"Processing query {query_id} with {len(remaining_retrievers)} remaining retrievers.")
 
         # Process the query with the remaining retrievers
         augment_item_db({
